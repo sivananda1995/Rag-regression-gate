@@ -18,7 +18,7 @@ from typing import Any
 
 from . import __version__
 from .config import Config
-from .corpus import chunk_documents, load_documents, load_queries
+from .corpus import build_index_units, chunk_documents, load_documents, load_queries
 from .embedders import build_embedder
 from .errors import RagateError
 from .indexes import build_index
@@ -63,7 +63,7 @@ class EvalReport:
         return p
 
     @classmethod
-    def load(cls, path: str | Path) -> "EvalReport":
+    def load(cls, path: str | Path) -> EvalReport:
         raw = json.loads(Path(path).read_text())
         raw["per_query"] = [QueryResult(**q) for q in raw["per_query"]]
         raw.setdefault("environment", {})
@@ -87,10 +87,11 @@ def run(cfg: Config) -> EvalReport:
     t_load = time.perf_counter()
 
     chunks = chunk_documents(documents, cfg.chunking)
+    units = build_index_units(chunks, cfg.chunking.dedupe_identical)
     t_chunk = time.perf_counter()
 
     embedder = build_embedder(cfg.embedder)
-    chunk_texts = [c.text for c in chunks]
+    chunk_texts = [u.text for u in units]
     embedder.fit(chunk_texts)
     chunk_vectors = embedder.encode(chunk_texts)
     t_embed_corpus = time.perf_counter()
@@ -105,14 +106,17 @@ def run(cfg: Config) -> EvalReport:
     k = cfg.evaluate.k
     # Retrieval is over chunks, so more than k chunks are pulled to leave room for
     # several chunks of the same document collapsing into one document slot.
-    chunk_k = min(len(chunks), max(k * 4, k + 10))
+    chunk_k = min(len(units), max(k * 4, k + 10))
     _, indices = index.search(query_vectors, chunk_k)
     t_search = time.perf_counter()
 
     results: list[QueryResult] = []
     for row, query in enumerate(queries):
         ranked_doc_ids = dedupe_preserving_rank(
-            chunks[int(i)].doc_id for i in indices[row] if int(i) >= 0
+            doc_id
+            for i in indices[row]
+            if int(i) >= 0
+            for doc_id in units[int(i)].doc_ids
         )[:k]
         scores = {
             name: float(fn(ranked_doc_ids, query.relevant_doc_ids, k))
@@ -144,6 +148,8 @@ def run(cfg: Config) -> EvalReport:
         corpus_stats={
             "documents": len(documents),
             "chunks": len(chunks),
+            "index_units": len(units),
+            "duplicate_chunks_collapsed": len(chunks) - len(units),
             "chunks_per_document": round(len(chunks) / len(documents), 3),
             "queries": len(results),
             "mean_relevant_per_query": round(sum(relevant_counts) / len(relevant_counts), 3),

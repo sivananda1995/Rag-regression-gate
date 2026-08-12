@@ -31,6 +31,8 @@ class ChunkingConfig:
     strategy: str = "sentence_window"
     target_chars: int = 480
     overlap_chars: int = 120
+    # Index byte-identical chunk text once, mapped to every document it appears in.
+    dedupe_identical: bool = True
 
     def validate(self) -> None:
         if self.strategy not in {"sentence_window", "fixed"}:
@@ -119,7 +121,7 @@ class Config:
     gate: GateConfig = field(default_factory=GateConfig)
     logging: LoggingConfig = field(default_factory=LoggingConfig)
 
-    def validate(self) -> "Config":
+    def validate(self) -> Config:
         for f in fields(self):
             section = getattr(self, f.name)
             validator = getattr(section, "validate", None)

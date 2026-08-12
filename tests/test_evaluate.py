@@ -47,3 +47,26 @@ def test_chunking_change_is_visible_in_corpus_stats(config):
     config.chunking.overlap_chars = 20
     fine = run(config)
     assert fine.corpus_stats["chunks"] > coarse.corpus_stats["chunks"]
+
+
+def test_dedupe_does_not_change_document_level_recall(config):
+    """Collapsing identical chunk text is an indexing optimisation, so the documents
+    a query can reach must not shrink. Fewer vectors, same or better recall."""
+    # Small chunks are needed for the fixture's two near-identical articles to share
+    # a passage; at the default 480 chars each article is a single chunk.
+    config.chunking.target_chars = 60
+    config.chunking.overlap_chars = 0
+    config.chunking.dedupe_identical = False
+    without = run(config)
+    config.chunking.dedupe_identical = True
+    with_dedupe = run(config)
+    assert with_dedupe.corpus_stats["index_units"] < without.corpus_stats["index_units"]
+    assert with_dedupe.aggregate["recall_at_k"] >= without.aggregate["recall_at_k"]
+
+
+def test_duplicate_chunk_count_is_reported(config):
+    config.chunking.dedupe_identical = True
+    report = run(config)
+    assert report.corpus_stats["duplicate_chunks_collapsed"] == (
+        report.corpus_stats["chunks"] - report.corpus_stats["index_units"]
+    )

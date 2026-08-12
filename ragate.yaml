@@ -8,6 +8,7 @@ chunking:
   strategy: sentence_window   # sentence_window | fixed
   target_chars: 480
   overlap_chars: 120
+  dedupe_identical: true
 
 embedder:
   provider: hashing           # hashing | openai

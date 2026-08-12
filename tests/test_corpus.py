@@ -3,7 +3,13 @@ from __future__ import annotations
 import pytest
 
 from ragate.config import ChunkingConfig
-from ragate.corpus import chunk_documents, load_documents, load_queries
+from ragate.corpus import (
+    build_index_units,
+    chunk_documents,
+    collapse_duplicate_chunks,
+    load_documents,
+    load_queries,
+)
 from ragate.errors import ConfigError, CorpusError
 
 
@@ -64,7 +70,9 @@ def test_sentence_window_respects_target_size(corpus_files):
 
 def test_chunk_ids_carry_their_document(corpus_files):
     corpus, _ = corpus_files
-    chunks = chunk_documents(load_documents(corpus), ChunkingConfig(target_chars=80, overlap_chars=20))
+    chunks = chunk_documents(
+        load_documents(corpus), ChunkingConfig(target_chars=80, overlap_chars=20)
+    )
     assert all(chunk.chunk_id.startswith(chunk.doc_id + "#") for chunk in chunks)
 
 
@@ -81,3 +89,38 @@ def test_fixed_chunker_covers_the_whole_document(corpus_files):
 def test_overlap_at_or_above_target_is_rejected():
     with pytest.raises(ConfigError, match="overlap_chars must be smaller"):
         ChunkingConfig(target_chars=100, overlap_chars=100).validate()
+
+
+def test_identical_chunk_text_is_indexed_once_with_every_owner(corpus_files):
+    """d1 and d2 differ only in platform, so their middle sentences are identical.
+    One vector must be indexed for that text, carrying both document ids."""
+    corpus, _ = corpus_files
+    docs = load_documents(corpus)
+    chunks = chunk_documents(docs, ChunkingConfig(target_chars=60, overlap_chars=0))
+    units = collapse_duplicate_chunks(chunks)
+    assert len(units) < len(chunks)
+    shared = [u for u in units if len(u.doc_ids) > 1]
+    assert shared, "expected at least one passage shared between d1 and d2"
+    assert all(u.occurrences == len(u.doc_ids) for u in units)
+    assert sum(u.occurrences for u in units) == len(chunks)
+
+
+def test_collapse_preserves_first_seen_order(corpus_files):
+    corpus, _ = corpus_files
+    chunks = chunk_documents(
+        load_documents(corpus), ChunkingConfig(target_chars=60, overlap_chars=0)
+    )
+    units = collapse_duplicate_chunks(chunks)
+    assert units[0].text == chunks[0].text
+
+
+def test_build_index_units_can_be_switched_off(corpus_files):
+    corpus, _ = corpus_files
+    chunks = chunk_documents(
+        load_documents(corpus), ChunkingConfig(target_chars=60, overlap_chars=0)
+    )
+    kept = build_index_units(chunks, dedupe=False)
+    collapsed = build_index_units(chunks, dedupe=True)
+    assert len(kept) == len(chunks)
+    assert all(len(u.doc_ids) == 1 for u in kept)
+    assert len(collapsed) < len(kept)

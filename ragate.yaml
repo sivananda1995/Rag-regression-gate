@@ -1,0 +1,41 @@
+# Default evaluation profile. Every value here can be overridden by an
+# environment variable of the form RAGATE_<SECTION>_<KEY> (see src/ragate/config.py).
+corpus:
+  path: data/corpus.jsonl
+  queries: data/golden_queries.jsonl
+
+chunking:
+  strategy: sentence_window   # sentence_window | fixed
+  target_chars: 480
+  overlap_chars: 120
+
+embedder:
+  provider: hashing           # hashing | openai
+  dimensions: 512
+  idf_weighting: true
+  char_ngram: 4
+  model: ""                   # only used by remote providers
+
+index:
+  backend: flat               # flat | faiss
+  metric: cosine
+
+evaluate:
+  k: 5
+  workers: 1
+
+gate:
+  primary_metric: recall_at_k
+  # A run fails if the primary metric drops by more than this many points (absolute)
+  max_absolute_drop: 0.02
+  # ...and the drop is statistically distinguishable from run-to-run noise
+  # at this confidence level, using a paired bootstrap over per-query scores.
+  bootstrap_confidence: 0.95
+  bootstrap_resamples: 5000
+  # Queries whose score falls by at least this much are listed in the blame table
+  blame_threshold: 0.5
+  baseline_path: baselines/baseline.json
+
+logging:
+  level: INFO
+  format: json

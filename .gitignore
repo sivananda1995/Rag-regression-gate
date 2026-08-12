@@ -1,0 +1,16 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+*.egg-info/
+dist/
+build/
+.ruff_cache/
+.env
+# Generated report artifacts (baselines are committed on purpose, reports are not)
+reports/
+benchmark/results/*.tmp

@@ -291,7 +291,10 @@ def main() -> None:
     with (out / "golden_queries.jsonl").open("w") as fh:
         for query in queries:
             fh.write(json.dumps(query) + "\n")
-    print(f"wrote {len(documents)} documents and {len(queries)} queries to {out}/ (seed {args.seed})")
+    print(
+        f"wrote {len(documents)} documents and {len(queries)} queries "
+        f"to {out}/ (seed {args.seed})"
+    )
 
 
 if __name__ == "__main__":

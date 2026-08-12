@@ -110,7 +110,9 @@ def main(argv: list[str] | None = None) -> int:
             if verdict.status == FAIL:
                 log.warning("regression detected but --warn-only was set, exiting 0")
             elif verdict.status == WARN:
-                log.warning("drop past tolerance but inside noise", extra={"reason": verdict.reason})
+                log.warning(
+                    "drop past tolerance but inside noise", extra={"reason": verdict.reason}
+                )
             return EXIT_OK
 
         if args.command == "report":

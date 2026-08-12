@@ -9,7 +9,7 @@ from a browser with no server.
 from __future__ import annotations
 
 import html
-from typing import Iterable
+from collections.abc import Iterable
 
 from .evaluate import EvalReport
 from .gate import FAIL, PASS, WARN, GateVerdict, QueryDelta

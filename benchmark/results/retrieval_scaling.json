@@ -1,0 +1,178 @@
+{
+  "generated_at": "2026-08-12T20:33:16+00:00",
+  "conditions": {
+    "python": "3.11.15",
+    "platform": "Linux-6.18.5-fc-v20-x86_64-with-glibc2.39",
+    "cpu_count": 2,
+    "queries_per_pass": 140,
+    "passes": 3,
+    "k_documents": 5,
+    "k_chunks_retrieved": 20,
+    "embedder": "hashing",
+    "dimensions": 512,
+    "chunking": "sentence_window 480/120",
+    "note": "single-query search, one at a time; padded corpora are used for latency and agreement only"
+  },
+  "rows": [
+    {
+      "corpus_multiple": 1,
+      "documents": 420,
+      "chunks": 1260,
+      "index_units": 518,
+      "duplicates_collapsed": 742,
+      "embed_corpus_s": 0.31,
+      "flat": {
+        "build_ms": 0.0,
+        "query_ms": {
+          "p50": 0.081,
+          "p95": 0.152,
+          "p99": 0.204,
+          "max": 1.194,
+          "mean": 0.095
+        },
+        "index_mb": 1.1
+      },
+      "faiss_hnsw": {
+        "build_ms": 61.2,
+        "query_ms": {
+          "p50": 0.063,
+          "p95": 0.12,
+          "p99": 0.19,
+          "max": 0.53,
+          "mean": 0.075
+        },
+        "top_k_agreement_with_exact": 1.0,
+        "retrieved_score_parity_mean": 1.0,
+        "retrieved_score_parity_worst": 1.0
+      }
+    },
+    {
+      "corpus_multiple": 3,
+      "documents": 1260,
+      "chunks": 4173,
+      "index_units": 1601,
+      "duplicates_collapsed": 2572,
+      "embed_corpus_s": 0.89,
+      "flat": {
+        "build_ms": 0.0,
+        "query_ms": {
+          "p50": 0.121,
+          "p95": 0.201,
+          "p99": 0.273,
+          "max": 0.555,
+          "mean": 0.136
+        },
+        "index_mb": 3.3
+      },
+      "faiss_hnsw": {
+        "build_ms": 170.7,
+        "query_ms": {
+          "p50": 0.094,
+          "p95": 0.147,
+          "p99": 0.191,
+          "max": 0.265,
+          "mean": 0.102
+        },
+        "top_k_agreement_with_exact": 0.9943,
+        "retrieved_score_parity_mean": 0.99928,
+        "retrieved_score_parity_worst": 0.90119
+      }
+    },
+    {
+      "corpus_multiple": 6,
+      "documents": 2520,
+      "chunks": 8380,
+      "index_units": 3167,
+      "duplicates_collapsed": 5213,
+      "embed_corpus_s": 1.77,
+      "flat": {
+        "build_ms": 0.0,
+        "query_ms": {
+          "p50": 0.204,
+          "p95": 0.287,
+          "p99": 0.334,
+          "max": 0.693,
+          "mean": 0.221
+        },
+        "index_mb": 6.5
+      },
+      "faiss_hnsw": {
+        "build_ms": 338.5,
+        "query_ms": {
+          "p50": 0.137,
+          "p95": 0.236,
+          "p99": 0.259,
+          "max": 0.34,
+          "mean": 0.15
+        },
+        "top_k_agreement_with_exact": 0.9929,
+        "retrieved_score_parity_mean": 0.99713,
+        "retrieved_score_parity_worst": 0.65719
+      }
+    },
+    {
+      "corpus_multiple": 12,
+      "documents": 5040,
+      "chunks": 17326,
+      "index_units": 6364,
+      "duplicates_collapsed": 10962,
+      "embed_corpus_s": 3.55,
+      "flat": {
+        "build_ms": 0.0,
+        "query_ms": {
+          "p50": 0.435,
+          "p95": 0.569,
+          "p99": 0.748,
+          "max": 1.585,
+          "mean": 0.449
+        },
+        "index_mb": 13.0
+      },
+      "faiss_hnsw": {
+        "build_ms": 698.4,
+        "query_ms": {
+          "p50": 0.15,
+          "p95": 0.231,
+          "p99": 0.268,
+          "max": 0.299,
+          "mean": 0.159
+        },
+        "top_k_agreement_with_exact": 0.9814,
+        "retrieved_score_parity_mean": 0.99786,
+        "retrieved_score_parity_worst": 0.85696
+      }
+    },
+    {
+      "corpus_multiple": 24,
+      "documents": 10080,
+      "chunks": 34489,
+      "index_units": 12673,
+      "duplicates_collapsed": 21816,
+      "embed_corpus_s": 7.5,
+      "flat": {
+        "build_ms": 0.0,
+        "query_ms": {
+          "p50": 1.11,
+          "p95": 1.39,
+          "p99": 4.434,
+          "max": 6.503,
+          "mean": 1.195
+        },
+        "index_mb": 26.0
+      },
+      "faiss_hnsw": {
+        "build_ms": 1934.3,
+        "query_ms": {
+          "p50": 0.235,
+          "p95": 0.335,
+          "p99": 0.426,
+          "max": 0.785,
+          "mean": 0.246
+        },
+        "top_k_agreement_with_exact": 0.9743,
+        "retrieved_score_parity_mean": 0.99642,
+        "retrieved_score_parity_worst": 0.71398
+      }
+    }
+  ]
+}

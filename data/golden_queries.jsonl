@@ -1,0 +1,140 @@
+{"query_id": "q-0000", "text": "Cobalt Mail: STG-8815 appears while sync crawls through big files", "relevant_doc_ids": ["kb-0032", "kb-0038", "kb-0213", "kb-0260", "kb-0344"], "task_key": "slowsync", "scope": "product"}
+{"query_id": "q-0001", "text": "Delta Drive: MSG-6641 in the log and invitations keep repeating on Android 15", "relevant_doc_ids": ["kb-0308"], "task_key": "duplicates", "scope": "platform"}
+{"query_id": "q-0002", "text": "team folder disappeared from Ionis Helpdesk, can we get it back", "relevant_doc_ids": ["kb-0215", "kb-0223", "kb-0306"], "task_key": "restore", "scope": "product"}
+{"query_id": "q-0003", "text": "Atlas VPN Client: door will not open even though the badge scans on ChromeOS", "relevant_doc_ids": ["kb-0295"], "task_key": "badge", "scope": "platform"}
+{"query_id": "q-0004", "text": "need a bigger upload allowance for Beacon SSO Portal", "relevant_doc_ids": ["kb-0107", "kb-0123"], "task_key": "quota", "scope": "product"}
+{"query_id": "q-0005", "text": "Harbor Print Service will not let me in and there is no unlock button on ChromeOS", "relevant_doc_ids": ["kb-0091"], "task_key": "lockout", "scope": "platform"}
+{"query_id": "q-0006", "text": "big files stop part way up in Forge CI Runner with no message", "relevant_doc_ids": ["kb-0059", "kb-0158", "kb-0301", "kb-0335", "kb-0416"], "task_key": "quota", "scope": "product"}
+{"query_id": "q-0007", "text": "Forge CI Runner: lost my authenticator, need the six digit prompt back on iOS 18", "relevant_doc_ids": ["kb-0176"], "task_key": "mfa", "scope": "platform"}
+{"query_id": "q-0008", "text": "Echo Meetings: door will not open even though the badge scans on Android 15", "relevant_doc_ids": ["kb-0418"], "task_key": "badge", "scope": "platform"}
+{"query_id": "q-0009", "text": "Beacon SSO Portal: connection refused with TL-5090, looks like a trust problem", "relevant_doc_ids": ["kb-0023", "kb-0092", "kb-0120", "kb-0277"], "task_key": "cert", "scope": "product"}
+{"query_id": "q-0010", "text": "integration broke right after we changed the secret for Lumen Badge Reader", "relevant_doc_ids": ["kb-0124", "kb-0133", "kb-0392"], "task_key": "rotate", "scope": "product"}
+{"query_id": "q-0011", "text": "Granite Vault: reports show the wrong local time after the clocks changed", "relevant_doc_ids": ["kb-0149", "kb-0206", "kb-0382"], "task_key": "timezone", "scope": "product"}
+{"query_id": "q-0012", "text": "Juno Time Tracker: shared directory gone and no earlier versions visible on Windows 11", "relevant_doc_ids": ["kb-0323"], "task_key": "restore", "scope": "platform"}
+{"query_id": "q-0013", "text": "getting the same meeting invite four times from Cobalt Mail", "relevant_doc_ids": ["kb-0104", "kb-0127", "kb-0173"], "task_key": "duplicates", "scope": "product"}
+{"query_id": "q-0014", "text": "Atlas VPN Cient: documents sit waiting forever at the printer", "relevant_doc_ids": ["kb-0067", "kb-0207", "kb-0375"], "task_key": "printqueue", "scope": "product"}
+{"query_id": "q-0015", "text": "Ionis Helpdesk says the issuer is not trusted on Ubuntu 24.04", "relevant_doc_ids": ["kb-0245"], "task_key": "cert", "scope": "platform"}
+{"query_id": "q-0016", "text": "Delta Drive: STG-8815 appears while sync crawls through big fies", "relevant_doc_ids": ["kb-0011", "kb-0062", "kb-0243", "kb-0331"], "task_key": "slowsync", "scope": "product"}
+{"query_id": "q-0017", "text": "MFA-4021 keeps showing when I try to sign in to Atlas VPN Client from Android 15", "relevant_doc_ids": ["kb-0078"], "task_key": "mfa", "scope": "platform"}
+{"query_id": "q-0018", "text": "Cobalt Mail will not let me in and there is no unlock button on macOS 15", "relevant_doc_ids": ["kb-0381"], "task_key": "lockout", "scope": "platform"}
+{"query_id": "q-0019", "text": "need a bigger upload allowance for Kepler Analytics", "relevant_doc_ids": ["kb-0261", "kb-0300", "kb-0352"], "task_key": "quota", "scope": "product"}
+{"query_id": "q-0020", "text": "Kepler Analytics will not let me in and there is no unlock button on Ubntu 24.04", "relevant_doc_ids": ["kb-0007"], "task_key": "lockout", "scope": "platform"}
+{"query_id": "q-0021", "text": "Granite Vault: lost my authenticator, need the six digit prompt back on Android 15", "relevant_doc_ids": ["kb-0419"], "task_key": "mfa", "scope": "platform"}
+{"query_id": "q-0022", "text": "MFA-4021 keeps showing when I try to sign in to Beacon SSO Portal from macOS 15", "relevant_doc_ids": ["kb-0170"], "task_key": "mfa", "scope": "platform"}
+{"query_id": "q-0023", "text": "getting the same meeting invite four times from Juno Time Tracker", "relevant_doc_ids": ["kb-0016", "kb-0027", "kb-0376"], "task_key": "duplicates", "scope": "product"}
+{"query_id": "q-0024", "text": "big files stop part way up in Lumen Badge Reader with no message", "relevant_doc_ids": ["kb-0037", "kb-0389"], "task_key": "quota", "scope": "product"}
+{"query_id": "q-0025", "text": "team folder disappeared from Juno Time Tracker, can we get it back", "relevant_doc_ids": ["kb-0264", "kb-0317", "kb-0323"], "task_key": "restore", "scope": "product"}
+{"query_id": "q-0026", "text": "Kepler Analytics: shared directory gone and no earlier versions visible on iOS 18", "relevant_doc_ids": ["kb-0189"], "task_key": "restore", "scope": "platform"}
+{"query_id": "q-0027", "text": "team folder disappeared from Echo Meetings, can we get it back", "relevant_doc_ids": ["kb-0211", "kb-0253", "kb-0386", "kb-0397"], "task_key": "restore", "scope": "product"}
+{"query_id": "q-0028", "text": "scheduled report from Harbor Print Service arrives with the wrong hour", "relevant_doc_ids": ["kb-0064", "kb-0347"], "task_key": "timezone", "scope": "product"}
+{"query_id": "q-0029", "text": "getting the same meeting invite four tmes from Granite Vault", "relevant_doc_ids": ["kb-0195", "kb-0226"], "task_key": "duplicates", "scope": "product"}
+{"query_id": "q-0030", "text": "Delta Drive: connection refused with TLS-5090, looks like a trust problem", "relevant_doc_ids": ["kb-0227", "kb-0236", "kb-0312"], "task_key": "cert", "scope": "product"}
+{"query_id": "q-0031", "text": "Delta Drive: account refused with IDP-1180 and self service unlock is missing", "relevant_doc_ids": ["kb-0234", "kb-0362"], "task_key": "lockout", "scope": "product"}
+{"query_id": "q-0032", "text": "federated sign in bounces back to the login screen for Lumen Badge Reader", "relevant_doc_ids": ["kb-0167", "kb-0233", "kb-0252", "kb-0286", "kb-0346", "kb-0349"], "task_key": "sso", "scope": "product"}
+{"query_id": "q-0033", "text": "Forge CI Runner: print jobs stuck and I cannot clear them from Windows 11", "relevant_doc_ids": ["kb-0081"], "task_key": "printqueue", "scope": "platform"}
+{"query_id": "q-0034", "text": "Echo Meetings says the issuer is not trusted on Ubuntu 24.04", "relevant_doc_ids": ["kb-0024"], "task_key": "cert", "scope": "platform"}
+{"query_id": "q-0035", "text": "MFA-4021 keeps showing when I try to sign in to Delta Drive from ChromeOS", "relevant_doc_ids": ["kb-0186"], "task_key": "mfa", "scope": "platform"}
+{"query_id": "q-0036", "text": "build machine looks connected but never pcks up work in Granite Vault", "relevant_doc_ids": ["kb-0191", "kb-0351"], "task_key": "agent", "scope": "product"}
+{"query_id": "q-0037", "text": "Ionis Helpdesk: SEC-3121 once the old credential expired on Windows 11", "relevant_doc_ids": ["kb-0179"], "task_key": "rotate", "scope": "platform"}
+{"query_id": "q-0038", "text": "Granite Vault: shared directory gone and no earlier versions visible on iOS 18", "relevant_doc_ids": ["kb-0298"], "task_key": "restore", "scope": "platform"}
+{"query_id": "q-0039", "text": "Beacon SSO Portal: lost my authenticator, need the six digit prompt back on Windows 11", "relevant_doc_ids": ["kb-0408"], "task_key": "mfa", "scope": "platform"}
+{"query_id": "q-0040", "text": "Cobalt Mail: connection refused with TLS-5090, looks like a trust problem", "relevant_doc_ids": ["kb-0033", "kb-0035", "kb-0061", "kb-0369", "kb-0372"], "task_key": "cert", "scope": "product"}
+{"query_id": "q-0041", "text": "MFA-4021 keeps showing when I try to sign in to Atlas VPN Client from iOS 18", "relevant_doc_ids": ["kb-0417"], "task_key": "mfa", "scope": "platform"}
+{"query_id": "q-0042", "text": "new phone and my Atlas VPN Client codes never arrive, how do I start enrollment over", "relevant_doc_ids": ["kb-0003", "kb-0078", "kb-0230", "kb-0413", "kb-0417"], "task_key": "mfa", "scope": "product"}
+{"query_id": "q-0043", "text": "too many bad passwords on Lumen Badge Reader, how long until I can try again", "relevant_doc_ids": ["kb-0183", "kb-0269", "kb-0299"], "task_key": "lockout", "scope": "product"}
+{"query_id": "q-0044", "text": "getting the same meeting invite four times from Beacon SSO Portal", "relevant_doc_ids": ["kb-0090", "kb-0290", "kb-0302"], "task_key": "duplicates", "scope": "product"}
+{"query_id": "q-0045", "text": "Harbor Print Service: door will not open even though the badge scans on macOS 15", "relevant_doc_ids": ["kb-0100"], "task_key": "badge", "scope": "platform"}
+{"query_id": "q-0046", "text": "new phone and my Juno Time Tracker codes never arrive, how do I start enrollment over", "relevant_doc_ids": ["kb-0146"], "task_key": "mfa", "scope": "product"}
+{"query_id": "q-0047", "text": "Kepler Analytis: CI-7003 and the runner sits idle with jobs waiting", "relevant_doc_ids": ["kb-0036", "kb-0060", "kb-0165"], "task_key": "agent", "scope": "product"}
+{"query_id": "q-0048", "text": "team folder disappeared from Ionis Helpdesk, can we get it back", "relevant_doc_ids": ["kb-0215", "kb-0223", "kb-0306"], "task_key": "restore", "scope": "product"}
+{"query_id": "q-0049", "text": "Harbor Print Service: CI-7003 and the runner sits idle with jobs waiting", "relevant_doc_ids": ["kb-0020", "kb-0069", "kb-0280"], "task_key": "agent", "scope": "product"}
+{"query_id": "q-0050", "text": "Echo Meetings: STG-7742 when opening a folder someone deleted last week", "relevant_doc_ids": ["kb-0211", "kb-0253", "kb-0386", "kb-0397"], "task_key": "restore", "scope": "product"}
+{"query_id": "q-0051", "text": "Atlas VPN Client: shared directory gone and no earlier versions visible on iOS 18", "relevant_doc_ids": ["kb-0332"], "task_key": "restore", "scope": "platform"}
+{"query_id": "q-0052", "text": "Harbor Print Service: FAC-1902 on the reader and the credential looks fine", "relevant_doc_ids": ["kb-0004", "kb-0066", "kb-0100", "kb-0303"], "task_key": "badge", "scope": "product"}
+{"query_id": "q-0053", "text": "swapped laptops and none of my Forge CI Runner preferences came across", "relevant_doc_ids": ["kb-0255", "kb-0322"], "task_key": "migrate", "scope": "product"}
+{"query_id": "q-0054", "text": "how do I carry settings to a new device for Ionis Helpdesk", "relevant_doc_ids": ["kb-0049", "kb-0085", "kb-0093", "kb-0139"], "task_key": "migrate", "scope": "product"}
+{"query_id": "q-0055", "text": "Lumen Badge Reader: print jobs stuck and I cannot clear them from ChromeOS", "relevant_doc_ids": ["kb-0403"], "task_key": "printqueue", "scope": "platform"}
+{"query_id": "q-0056", "text": "new phone and my Cobalt Mail codes never arrive, how do I start enrollment over", "relevant_doc_ids": ["kb-0125", "kb-0164", "kb-0228", "kb-0365"], "task_key": "mfa", "scope": "product"}
+{"query_id": "q-0057", "text": "build machine looks connected but never picks up work in Juno Time Tracker", "relevant_doc_ids": ["kb-0006", "kb-0169", "kb-0222"], "task_key": "agent", "scope": "product"}
+{"query_id": "q-0058", "text": "Ionis Helpdesk: STG-7742 when opening a folder someone deleted last week", "relevant_doc_ids": ["kb-0215", "kb-0223", "kb-0306"], "task_key": "restore", "scope": "product"}
+{"query_id": "q-0059", "text": "Beacon SSO Portal: shared directory gone and no earlier versions visible on macOS 15", "relevant_doc_ids": ["kb-0192"], "task_key": "restore", "scope": "platform"}
+{"query_id": "q-0060", "text": "big files stop part way up in Echo Meetings with no message", "relevant_doc_ids": ["kb-0132", "kb-0340"], "task_key": "quota", "scope": "product"}
+{"query_id": "q-0061", "text": "swapped laptops and none of my Beacon SSO Portal preferences came across", "relevant_doc_ids": ["kb-0070", "kb-0162"], "task_key": "migrate", "scope": "product"}
+{"query_id": "q-0062", "text": "Lumen Bage Reader: calendar keeps duplicating one booking", "relevant_doc_ids": ["kb-0019"], "task_key": "duplicates", "scope": "product"}
+{"query_id": "q-0063", "text": "Harbor Print Service: account refused with IP-1180 and self service unlock is missing", "relevant_doc_ids": ["kb-0091", "kb-0111", "kb-0257", "kb-0283"], "task_key": "lockout", "scope": "product"}
+{"query_id": "q-0064", "text": "Echo Meetings: STG-8815 appears while sync crawls through big files", "relevant_doc_ids": ["kb-0102", "kb-0184", "kb-0208", "kb-0319"], "task_key": "slowsync", "scope": "product"}
+{"query_id": "q-0065", "text": "Harbor Print Service will not let me in and there is no unlock button on Ubuntu 24.04", "relevant_doc_ids": ["kb-0111"], "task_key": "lockout", "scope": "platform"}
+{"query_id": "q-0066", "text": "Cobalt Mail: shared directory gone and no earlier versions visible on macOS 15", "relevant_doc_ids": ["kb-0231"], "task_key": "restore", "scope": "platform"}
+{"query_id": "q-0067", "text": "Cobalt Mail: SEC-3121 once the old credential expired on Android 15", "relevant_doc_ids": ["kb-0202"], "task_key": "rotate", "scope": "platform"}
+{"query_id": "q-0068", "text": "integration broke right after we changed the secret for Delta Drive", "relevant_doc_ids": ["kb-0174", "kb-0251", "kb-0407"], "task_key": "rotate", "scope": "product"}
+{"query_id": "q-0069", "text": "Lumen Badge Reader: untruted certificate warning after the weekend on macOS 15", "relevant_doc_ids": ["kb-0292"], "task_key": "cert", "scope": "platform"}
+{"query_id": "q-0070", "text": "new phone and my Granite Vault codes never arrive, how do I start enrollment over", "relevant_doc_ids": ["kb-0338", "kb-0419"], "task_key": "mfa", "scope": "product"}
+{"query_id": "q-0071", "text": "Ionis Helpdesk says the issuer is not trusted on iOS 18", "relevant_doc_ids": ["kb-0074"], "task_key": "cert", "scope": "platform"}
+{"query_id": "q-0072", "text": "Lumen Badge Reader: lost my authenticator, need the six digit prompt back on Windows 11", "relevant_doc_ids": ["kb-0128"], "task_key": "mfa", "scope": "platform"}
+{"query_id": "q-0073", "text": "Harbor Print Service: why is my sync so slow after a small edit", "relevant_doc_ids": ["kb-0229", "kb-0328", "kb-0363"], "task_key": "slowsync", "scope": "product"}
+{"query_id": "q-0074", "text": "too many bad passwords on Ionis Helpdesk, how long until I can try again", "relevant_doc_ids": ["kb-0080", "kb-0246"], "task_key": "lockout", "scope": "product"}
+{"query_id": "q-0075", "text": "too many bad passwords on Lumen Badge Reader, how long until I can try again", "relevant_doc_ids": ["kb-0183", "kb-0269", "kb-0299"], "task_key": "lockout", "scope": "product"}
+{"query_id": "q-0076", "text": "getting the same meeting invite four times from Echo Meetings", "relevant_doc_ids": ["kb-0190", "kb-0293", "kb-0316"], "task_key": "duplicates", "scope": "product"}
+{"query_id": "q-0077", "text": "Cobalt Mail: door will not open even though the badge scans on Ubuntu 24.04", "relevant_doc_ids": ["kb-0385"], "task_key": "badge", "scope": "platform"}
+{"query_id": "q-0078", "text": "federated sign in bounces back to the login screen for Juno Time Tracker", "relevant_doc_ids": ["kb-0073", "kb-0086", "kb-0345"], "task_key": "sso", "scope": "product"}
+{"query_id": "q-0079", "text": "need a bigger upload allowance for Granite Vault", "relevant_doc_ids": ["kb-0047", "kb-0168", "kb-0187"], "task_key": "quota", "scope": "product"}
+{"query_id": "q-0080", "text": "big files stop part way up in Forge CI Runner with no message", "relevant_doc_ids": ["kb-0059", "kb-0158", "kb-0301", "kb-0335", "kb-0416"], "task_key": "quota", "scope": "product"}
+{"query_id": "q-0081", "text": "need a bigger upload allowance for Delta Drive", "relevant_doc_ids": ["kb-0025", "kb-0114", "kb-0239"], "task_key": "quota", "scope": "product"}
+{"query_id": "q-0082", "text": "federated sign in bounces back to the login screen for Luen Badge Reader", "relevant_doc_ids": ["kb-0167", "kb-0233", "kb-0252", "kb-0286", "kb-0346", "kb-0349"], "task_key": "sso", "scope": "product"}
+{"query_id": "q-0083", "text": "Lumen Badge Reader: pipeline agent stopped taking jobs on ChromeOS", "relevant_doc_ids": ["kb-0115"], "task_key": "agent", "scope": "platform"}
+{"query_id": "q-0084", "text": "badge beeps at the door but it stays shut, Lumen Badge Reader shows it active", "relevant_doc_ids": ["kb-0068", "kb-0072", "kb-0304", "kb-0320", "kb-0361"], "task_key": "badge", "scope": "product"}
+{"query_id": "q-0085", "text": "Cobalt Mail: print jobs stuck and I cannot clear them from ChromeOS", "relevant_doc_ids": ["kb-0051"], "task_key": "printqueue", "scope": "platform"}
+{"query_id": "q-0086", "text": "Echo Meetings: calendar keeps duplicating one booking", "relevant_doc_ids": ["kb-0190", "kb-0293", "kb-0316"], "task_key": "duplicates", "scope": "product"}
+{"query_id": "q-0087", "text": "Ionis Helpdesk: lost my authenticator, need the six digit prompt back on Windows 11", "relevant_doc_ids": ["kb-0342"], "task_key": "mfa", "scope": "platform"}
+{"query_id": "q-0088", "text": "too many bad passwords on Forge CI Runner, how long until I can try again", "relevant_doc_ids": ["kb-0031", "kb-0220", "kb-0384"], "task_key": "lockout", "scope": "product"}
+{"query_id": "q-0089", "text": "Lumen Badge Reader says the issuer is not trusted on iOS 18", "relevant_doc_ids": ["kb-0396"], "task_key": "cert", "scope": "platform"}
+{"query_id": "q-0090", "text": "Ionis Helpdesk: STG-3310 on a large attachment, is there a size cap on macOS 15", "relevant_doc_ids": ["kb-0017"], "task_key": "quota", "scope": "platform"}
+{"query_id": "q-0091", "text": "Lumen Badge Reader: STG-7742 when opening a folder someone deleted last week", "relevant_doc_ids": ["kb-0046", "kb-0334"], "task_key": "restore", "scope": "product"}
+{"query_id": "q-0092", "text": "badge beeps at the door but it stays shut, Lumen Badge Reader shows it active", "relevant_doc_ids": ["kb-0068", "kb-0072", "kb-0304", "kb-0320", "kb-0361"], "task_key": "badge", "scope": "product"}
+{"query_id": "q-0093", "text": "Atlas VPN Client: MSG-6641 in the log and invitatins keep repeating on Windows 11", "relevant_doc_ids": ["kb-0026"], "task_key": "duplicates", "scope": "platform"}
+{"query_id": "q-0094", "text": "Delta Drive: SEC-3121 once the old credential expired on macOS 15", "relevant_doc_ids": ["kb-0174"], "task_key": "rotate", "scope": "platform"}
+{"query_id": "q-0095", "text": "badge beeps at the door but it stays sut, Ionis Helpdesk shows it active", "relevant_doc_ids": ["kb-0040", "kb-0112", "kb-0358"], "task_key": "badge", "scope": "product"}
+{"query_id": "q-0096", "text": "scheduled report from Beacon SSO Portal arrives with the wrong hour", "relevant_doc_ids": ["kb-0151", "kb-0171", "kb-0276", "kb-0354"], "task_key": "timezone", "scope": "product"}
+{"query_id": "q-0097", "text": "Harbor Print Service: pipeline agent stopped taking jobs on Windows 11", "relevant_doc_ids": ["kb-0280"], "task_key": "agent", "scope": "platform"}
+{"query_id": "q-0098", "text": "Forge CI Runner: STG-3310 on a large attachment, is there a size cap on iOS 18", "relevant_doc_ids": ["kb-0416"], "task_key": "quota", "scope": "platform"}
+{"query_id": "q-0099", "text": "Kepler Analytics: connection refused with TLS-5090, looks like a trust problem", "relevant_doc_ids": ["kb-0110", "kb-0157", "kb-0235"], "task_key": "cert", "scope": "product"}
+{"query_id": "q-0100", "text": "swapped laptops and none of my Kepler Analytics preferences came across", "relevant_doc_ids": ["kb-0105", "kb-0156", "kb-0409"], "task_key": "migrate", "scope": "product"}
+{"query_id": "q-0101", "text": "Granite Vault: IDP-9004 setting up a brand new tenant for single sign on", "relevant_doc_ids": ["kb-0145", "kb-0262", "kb-0307"], "task_key": "sso", "scope": "product"}
+{"query_id": "q-0102", "text": "Echo Meetings: STG-8815 appears while sync crawls through big files", "relevant_doc_ids": ["kb-0102", "kb-0184", "kb-0208", "kb-0319"], "task_key": "slowsync", "scope": "product"}
+{"query_id": "q-0103", "text": "Kepler Analytics: STG-7742 when opening a folder someone deleted last week", "relevant_doc_ids": ["kb-0108", "kb-0130", "kb-0189", "kb-0224", "kb-0414"], "task_key": "restore", "scope": "product"}
+{"query_id": "q-0104", "text": "Lumen Badge Reader: AN-5520 and every export is off by an hour on macOS 15", "relevant_doc_ids": ["kb-0336"], "task_key": "timezone", "scope": "platform"}
+{"query_id": "q-0105", "text": "Forge CI Runner: connection refused with TLS-5090, looks like a trust problem", "relevant_doc_ids": ["kb-0087", "kb-0109", "kb-0126", "kb-0160", "kb-0279"], "task_key": "cert", "scope": "product"}
+{"query_id": "q-0106", "text": "Echo Meetings takes hours to sync a tiny change on ChromeOS", "relevant_doc_ids": ["kb-0319"], "task_key": "slowsync", "scope": "platform"}
+{"query_id": "q-0107", "text": "Atlas VPN Client: STG-7742 when opening a folder smeone deleted last week", "relevant_doc_ids": ["kb-0278", "kb-0332"], "task_key": "restore", "scope": "product"}
+{"query_id": "q-0108", "text": "Atlas VPN Client will not let me in and there is no unlock button on macOS 15", "relevant_doc_ids": ["kb-0098"], "task_key": "lockout", "scope": "platform"}
+{"query_id": "q-0109", "text": "Lumen Badge Reader: STG-3310 on a large attachment, is there a size cap on Android 15", "relevant_doc_ids": ["kb-0037"], "task_key": "quota", "scope": "platform"}
+{"query_id": "q-0110", "text": "Forge CI Runner: FAC-1902 on the reader and the credential looks fine", "relevant_doc_ids": ["kb-0274", "kb-0288", "kb-0310", "kb-0390"], "task_key": "badge", "scope": "product"}
+{"query_id": "q-0111", "text": "Harbor Print Service: IDP-9004 setting up a brand new tenant for single sign on", "relevant_doc_ids": ["kb-0079", "kb-0330", "kb-0356", "kb-0398"], "task_key": "sso", "scope": "product"}
+{"query_id": "q-0112", "text": "Harbor Print Service: print jobs stuck and I cannot clear them from Ubuntu 24.04", "relevant_doc_ids": ["kb-0089"], "task_key": "printqueue", "scope": "platform"}
+{"query_id": "q-0113", "text": "Lumen Badge Reader: FAC-1902 on the reader and the credential looks fine", "relevant_doc_ids": ["kb-0068", "kb-0072", "kb-0304", "kb-0320", "kb-0361"], "task_key": "badge", "scope": "product"}
+{"query_id": "q-0114", "text": "integration broke right after we changed the secret for Ionis Helpdesk", "relevant_doc_ids": ["kb-0179", "kb-0399"], "task_key": "rotate", "scope": "product"}
+{"query_id": "q-0115", "text": "Atlas VPN Client: SEC-3121 once the old credential expired on Windows 11", "relevant_doc_ids": ["kb-0161"], "task_key": "rotate", "scope": "platform"}
+{"query_id": "q-0116", "text": "badge beeps at the door but it stays shut, Beacon SSO Portal shows it active", "relevant_doc_ids": ["kb-0029", "kb-0258"], "task_key": "badge", "scope": "product"}
+{"query_id": "q-0117", "text": "Harbor Print Service: SEC-3121 once the old credential expired on Ubuntu 24.04", "relevant_doc_ids": ["kb-0088"], "task_key": "rotate", "scope": "platform"}
+{"query_id": "q-0118", "text": "Delta Drive: login loop on iOS 18 after we turned on federation", "relevant_doc_ids": ["kb-0404"], "task_key": "sso", "scope": "platform"}
+{"query_id": "q-0119", "text": "Echo Meetings will not let me in and tere is no unlock button on macOS 15", "relevant_doc_ids": ["kb-0282"], "task_key": "lockout", "scope": "platform"}
+{"query_id": "q-0120", "text": "Kepler Analytics: pipeline agent stopped taking jobs on Android 15", "relevant_doc_ids": ["kb-0060"], "task_key": "agent", "scope": "platform"}
+{"query_id": "q-0121", "text": "need a bigger upload allowance for Atlas VPN Client", "relevant_doc_ids": ["kb-0216", "kb-0339"], "task_key": "quota", "scope": "product"}
+{"query_id": "q-0122", "text": "Granite Vault: SEC-3121 once the old credential expired on Android 15", "relevant_doc_ids": ["kb-0039"], "task_key": "rotate", "scope": "platform"}
+{"query_id": "q-0123", "text": "Beacon SSO Portal: connection refused with TLS-5090, looks like a trust problem", "relevant_doc_ids": ["kb-0023", "kb-0092", "kb-0120", "kb-0277"], "task_key": "cert", "scope": "product"}
+{"query_id": "q-0124", "text": "Juno Time Tracker: EP-2255 while moving my profile to a replacement iOS 18 machine", "relevant_doc_ids": ["kb-0256"], "task_key": "migrate", "scope": "platform"}
+{"query_id": "q-0125", "text": "federated sign in bounces back to the login screen for Atlas VPN Client", "relevant_doc_ids": ["kb-0402"], "task_key": "sso", "scope": "product"}
+{"query_id": "q-0126", "text": "Ionis Helpdesk: login loop on iOS 18 after we turned on federation", "relevant_doc_ids": ["kb-0297"], "task_key": "sso", "scope": "platform"}
+{"query_id": "q-0127", "text": "Juno Time Tracker: FAC-1902 on the reader and the credential looks fine", "relevant_doc_ids": ["kb-0134", "kb-0178", "kb-0275"], "task_key": "badge", "scope": "product"}
+{"query_id": "q-0128", "text": "how do I carry settings to a new device for Harbor Print Service", "relevant_doc_ids": ["kb-0199", "kb-0254", "kb-0313"], "task_key": "migrate", "scope": "product"}
+{"query_id": "q-0129", "text": "Granite Vault: FAC-1902 on the reader and the credential looks fine", "relevant_doc_ids": ["kb-0030", "kb-0084", "kb-0140", "kb-0412"], "task_key": "badge", "scope": "product"}
+{"query_id": "q-0130", "text": "Echo Meetings: account refused with IDP-1180 and self service unlock is missing", "relevant_doc_ids": ["kb-0071", "kb-0282", "kb-0296"], "task_key": "lockout", "scope": "product"}
+{"query_id": "q-0131", "text": "build machine looks connected but never picks up work in Forge CI Runner", "relevant_doc_ids": ["kb-0185", "kb-0201", "kb-0219"], "task_key": "agent", "scope": "product"}
+{"query_id": "q-0132", "text": "Beacon SSO Portal: reports show the wrong local time after the clocks changed", "relevant_doc_ids": ["kb-0151", "kb-0171", "kb-0276", "kb-0354"], "task_key": "timezone", "scope": "product"}
+{"query_id": "q-0133", "text": "Kepler Analytics: STG-3310 on a large attachment, is thre a size cap on Android 15", "relevant_doc_ids": ["kb-0352"], "task_key": "quota", "scope": "platform"}
+{"query_id": "q-0134", "text": "Harbor Print Service: STG-7742 when opening a folder someone deleted last week", "relevant_doc_ids": ["kb-0116", "kb-0371"], "task_key": "restore", "scope": "product"}
+{"query_id": "q-0135", "text": "Granite Vault: connection refused with TLS-5090, looks like a trust problem", "relevant_doc_ids": ["kb-0065", "kb-0383", "kb-0393"], "task_key": "cert", "scope": "product"}
+{"query_id": "q-0136", "text": "Kepler Analytics: how do we swap an expiring key without downtime", "relevant_doc_ids": ["kb-0050", "kb-0075", "kb-0196"], "task_key": "rotate", "scope": "product"}
+{"query_id": "q-0137", "text": "Echo Meetings: STG-7742 when opening a folder someone deleted last week", "relevant_doc_ids": ["kb-0211", "kb-0253", "kb-0386", "kb-0397"], "task_key": "restore", "scope": "product"}
+{"query_id": "q-0138", "text": "Lumen Badge Reader: why is my sync so slow after a small edit", "relevant_doc_ids": ["kb-0360", "kb-0374"], "task_key": "slowsync", "scope": "product"}
+{"query_id": "q-0139", "text": "EP-4402 and the queue will not empty on Delta Drive", "relevant_doc_ids": ["kb-0152", "kb-0401"], "task_key": "printqueue", "scope": "product"}

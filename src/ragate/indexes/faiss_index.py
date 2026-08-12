@@ -38,10 +38,21 @@ class FaissHnswIndex:
 
     def build(self, vectors: np.ndarray) -> None:
         vectors = np.ascontiguousarray(vectors, dtype=np.float32)
-        # Vectors are already L2 normalised, so inner product equals cosine similarity.
-        index = self._faiss.IndexHNSWFlat(
-            vectors.shape[1], self._m, self._faiss.METRIC_INNER_PRODUCT
-        )
+        # Squared L2, not inner product, even though the goal is cosine similarity.
+        # HNSW navigates by greedy descent over a proximity graph, and that descent
+        # assumes a true metric; inner product provides no triangle inequality for the
+        # traversal to lean on. For unit-length vectors the two rankings are
+        # equivalent, because ||a - b||^2 = 2 - 2*cos(a, b), so ascending squared L2
+        # is exactly descending cosine and nothing is given up by choosing the metric
+        # the structure was designed for.
+        #
+        # Honest scope of this choice: it is correctness by construction, not a
+        # measured win. On this corpus the two metrics scored 0.814 and 0.808 on the
+        # retrieved-score parity check in benchmark/bench_retrieval.py, a difference
+        # inside run-to-run variation. The large parity loss that prompted the
+        # investigation came from duplicate vectors, not from the metric; see the war
+        # story in the README.
+        index = self._faiss.IndexHNSWFlat(vectors.shape[1], self._m, self._faiss.METRIC_L2)
         index.hnsw.efConstruction = self._ef_construction
         index.hnsw.efSearch = self._ef_search
         index.add(vectors)
@@ -49,13 +60,20 @@ class FaissHnswIndex:
         log.info(
             "faiss index built",
             extra={"vectors": int(vectors.shape[0]), "m": self._m,
-                   "ef_construction": self._ef_construction},
+                   "ef_construction": self._ef_construction, "metric": "l2_on_unit_vectors"},
         )
 
     def search(self, queries: np.ndarray, k: int) -> tuple[np.ndarray, np.ndarray]:
+        """Return cosine similarities, so callers cannot tell the backends apart.
+
+        FAISS reports squared L2 distances here. They are converted back with
+        cos = 1 - d/2, which is exact for unit-length vectors, keeping the score
+        semantics identical to the exact backend.
+        """
         if self._index is None:
             raise RagateError("build() must be called before search()")
-        scores, indices = self._index.search(
+        distances, indices = self._index.search(
             np.ascontiguousarray(queries, dtype=np.float32), k
         )
-        return scores, indices
+        similarities = 1.0 - (distances / 2.0)
+        return similarities.astype(np.float32), indices

@@ -1,0 +1,69 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - name: Install
+        run: pip install -e ".[dev,faiss]"
+      - name: Lint
+        run: ruff check .
+      - name: Test with coverage
+        run: pytest --cov=ragate --cov-report=term --cov-report=xml -q
+      - name: Fail if coverage drops below the committed floor
+        run: |
+          python - <<'PY'
+          import sys, xml.etree.ElementTree as ET
+          floor = 0.90
+          rate = float(ET.parse("coverage.xml").getroot().attrib["line-rate"])
+          print(f"line coverage {rate:.2%} (floor {floor:.0%})")
+          sys.exit(0 if rate >= floor else 1)
+          PY
+
+  retrieval-gate:
+    # The gate is the product, so this repository runs it on itself. A pull request that
+    # changes the chunker, the embedder, or the index has to survive its own golden set.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install
+        run: pip install -e ".[dev,faiss]"
+      - name: Evaluate the golden set and compare against the committed baseline
+        id: gate
+        run: |
+          ragate gate \
+            --markdown gate-summary.md \
+            --html gate-report.html
+      - name: Publish the verdict to the job summary
+        if: always()
+        run: cat gate-summary.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload the full report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: retrieval-gate-report
+          path: |
+            gate-report.html
+            gate-summary.md
+          retention-days: 14

@@ -1,0 +1,56 @@
+name: RAG retrieval regression gate
+description: >-
+  Fail a pull request when retrieval quality drops on a labeled golden set, using a
+  tolerance plus a paired bootstrap so small-golden-set noise does not block the build.
+author: Sivananda Reddy Julakanti
+branding:
+  icon: filter
+  color: blue
+
+inputs:
+  config:
+    description: Path to the ragate YAML profile
+    required: false
+    default: ragate.yaml
+  baseline:
+    description: Path to the committed baseline report
+    required: false
+    default: baselines/baseline.json
+  warn-only:
+    description: Report a regression without failing the job, for a soft rollout
+    required: false
+    default: "false"
+  summary:
+    description: Write the markdown verdict to the GitHub step summary
+    required: false
+    default: "true"
+
+outputs:
+  status:
+    description: PASS, WARN, or FAIL
+    value: ${{ steps.run.outputs.status }}
+
+runs:
+  using: composite
+  steps:
+    - name: Install ragate
+      shell: bash
+      run: pip install --disable-pip-version-check "${{ github.action_path }}"
+    - name: Run the gate
+      id: run
+      shell: bash
+      run: |
+        set +e
+        args=(-c "${{ inputs.config }}" gate --baseline "${{ inputs.baseline }}"
+              --markdown ragate-summary.md --html ragate-report.html)
+        if [ "${{ inputs.warn-only }}" = "true" ]; then args+=(--warn-only); fi
+        ragate "${args[@]}"
+        code=$?
+        status=PASS
+        grep -q "Retrieval gate: FAIL" ragate-summary.md && status=FAIL
+        grep -q "Retrieval gate: WARN" ragate-summary.md && status=WARN
+        echo "status=$status" >> "$GITHUB_OUTPUT"
+        if [ "${{ inputs.summary }}" = "true" ] && [ -n "$GITHUB_STEP_SUMMARY" ]; then
+          cat ragate-summary.md >> "$GITHUB_STEP_SUMMARY"
+        fi
+        exit $code

@@ -74,7 +74,7 @@ def _gate_lines(reports: Path, name: str, command: str) -> list[str]:
     lines += stdout[:26]
     if verdict_lines:
         status = json.loads(verdict_lines[-1]).get("status", "")
-        lines += ["", f"$ echo $?", "1" if status == "FAIL" else "0"]
+        lines += ["", "$ echo $?", "1" if status == "FAIL" else "0"]
     return lines
 
 

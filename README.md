@@ -38,6 +38,8 @@ On the committed 420-article corpus and 140-query golden set, the baseline pipel
 
 ![Gate report for a borderline drop, showing a WARN verdict and an interval that includes zero](docs/screenshots/gate_warn_report.png)
 
+**An improvement, exit code 0.** Shortening the character n-gram from 4 to 3 absorbs the typos in a quarter of the golden queries: recall@5 0.9121, delta +0.0486, interval `[+0.0231, +0.0776]`. The report lists which queries gained, which is how a retrieval change gets defended in review instead of argued about ([full-size image](docs/screenshots/gate_pass_report.png)).
+
 ## Architecture
 
 ```mermaid
@@ -176,7 +178,7 @@ Full records in [`docs/adr/`](docs/adr/):
 - **Generation quality.** This gate stops at retrieval: which documents come back, in what order. Answer faithfulness and groundedness need a different harness with a different labeling cost, and conflating the two produces a metric nobody can act on. Trigger to add it: once retrieval is fenced by this gate and regressions still reach users, the next measurement is generation.
 - **Recording history and trends.** There is no dashboard of recall over time; `git log baselines/baseline.json` is the trend view. Trigger: more than one evaluation profile per repository, or a need to compare more than about 20 historical runs (ADR-002).
 - **Reranker evaluation.** The pipeline is chunk, embed, search. A cross-encoder reranking stage is a natural fourth step and the `Embedder`/`VectorIndex` protocols leave room for it. Trigger: a reranker enters the production path, at which point the gate must measure the pipeline that actually serves traffic.
-- **Parallel evaluation.** `evaluate.workers` exists in the config and is honoured as 1. Embedding 518 texts takes 300 ms, so concurrency would add complexity for no measurable win. Trigger: a golden-set run past 30 seconds, which for a hosted embedding API arrives at roughly 2,000 queries.
+- **Parallel evaluation.** Everything runs on one thread. Embedding 518 texts takes about 300 ms, so concurrency would add complexity for no measurable win, and a `workers` knob that did nothing was removed during the forensics audit rather than left in the config as decoration. Trigger: a golden-set run past 30 seconds, which for a hosted embedding API arrives at roughly 2,000 queries.
 
 ## Security and compliance
 
@@ -191,7 +193,7 @@ Full records in [`docs/adr/`](docs/adr/):
 | Failure | Detection | Behaviour | Recovery |
 | --- | --- | --- | --- |
 | Baseline file missing (fresh repository, or someone deleted it) | `load_baseline` checks for the path before doing any work | Exit code 3 with a message naming the command that creates one | Run `ragate baseline` on a commit whose quality is trusted, and commit the file |
-| Golden set changed, so the baseline is no longer comparable | Every report carries a fingerprint of corpus paths plus `k`; the gate compares fingerprints before comparing metrics | Exit code 3, refuses to produce a verdict, rather than reporting a fake regression | Re-record the baseline; the PR diff shows the new reference |
+| Corpus or golden set changed, so the baseline is no longer comparable | Every report carries a fingerprint: sha256 of the corpus file, sha256 of the golden-set file, and `k`. The gate compares fingerprints before comparing metrics and names the field that differs | Exit code 3, refuses to produce a verdict, rather than reporting a fake regression | Re-record the baseline; the PR diff shows the new reference. Verified by editing one line of the corpus in place, which produces exit 3 naming `corpus_sha256` |
 | A golden label points at a document that no longer exists | Query loading validates every label against the loaded corpus | Exit code 2 naming the query and the missing document ids | Fix the label or restore the document. Left as a warning it would depress recall permanently and silently |
 | Embedding provider is down or rate-limiting | Provider adapter retries five times with exponential backoff starting at 0.5 s, logging each attempt | Raises `EmbedderError` after the last attempt, exit code 2, no verdict written | CI retries the job; a persistent outage is an infrastructure incident, and the gate correctly declines to guess a verdict |
 | No `OPENAI_API_KEY` while the profile asks for the hosted provider | Checked at construction, before any work | Exit code 2 with the environment variable named and the local alternative suggested | Set the secret, or run with `RAGATE_EMBEDDER_PROVIDER=hashing` |

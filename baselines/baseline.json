@@ -1,6 +1,6 @@
 {
   "ragate_version": "0.3.0",
-  "generated_at": "2026-08-12T20:35:27+00:00",
+  "generated_at": "2026-08-12T20:45:01+00:00",
   "k": 5,
   "aggregate": {
     "recall_at_k": 0.8635714285714284,
@@ -3011,13 +3011,13 @@
     "recall_at_k_ceiling": 0.9976
   },
   "timings_ms": {
-    "load": 7.3,
-    "chunk": 16.6,
-    "embed_corpus": 308.6,
+    "load": 4.8,
+    "chunk": 16.7,
+    "embed_corpus": 312.0,
     "index_build": 0.0,
-    "embed_queries": 18.0,
-    "search": 3.2,
-    "total": 356.6
+    "embed_queries": 17.6,
+    "search": 3.3,
+    "total": 357.5
   },
   "config": {
     "corpus": {
@@ -3042,8 +3042,7 @@
       "metric": "cosine"
     },
     "evaluate": {
-      "k": 5,
-      "workers": 1
+      "k": 5
     },
     "gate": {
       "primary_metric": "recall_at_k",
@@ -3059,10 +3058,8 @@
     }
   },
   "fingerprint": {
-    "corpus": {
-      "path": "data/corpus.jsonl",
-      "queries": "data/golden_queries.jsonl"
-    },
+    "corpus_sha256": "2925e3e67c30caa6",
+    "queries_sha256": "20cd6a4528955270",
     "k": 5
   },
   "environment": {

@@ -74,9 +74,35 @@ def test_validation_rejects_impossible_values(tmp_path, body, message):
         load(_profile(tmp_path, body), env={})
 
 
-def test_fingerprint_covers_corpus_and_k_only(tmp_path):
-    cfg = load(_profile(tmp_path, "evaluate:\n  k: 4\n"), env={})
-    fingerprint = cfg.fingerprint()
-    assert fingerprint["k"] == 4
-    assert "corpus" in fingerprint
-    assert "embedder" not in fingerprint
+def test_fingerprint_is_keyed_on_content_not_paths(tmp_path):
+    """Editing the corpus in place must invalidate a baseline; moving the file must not."""
+    corpus = tmp_path / "corpus.jsonl"
+    corpus.write_text('{"doc_id": "a", "title": "t", "text": "one"}\n')
+    queries = tmp_path / "queries.jsonl"
+    queries.write_text('{"query_id": "q", "text": "one", "relevant_doc_ids": ["a"]}\n')
+
+    def fingerprint_for(corpus_path, queries_path):
+        body = (
+            f"corpus:\n  path: {corpus_path}\n  queries: {queries_path}\nevaluate:\n  k: 4\n"
+        )
+        return load(_profile(tmp_path, body), env={}).fingerprint()
+
+    original = fingerprint_for(corpus, queries)
+    assert original["k"] == 4
+    assert "embedder" not in original
+
+    moved = tmp_path / "elsewhere.jsonl"
+    moved.write_bytes(corpus.read_bytes())
+    assert fingerprint_for(moved, queries) == original
+
+    corpus.write_text('{"doc_id": "a", "title": "t", "text": "one edited"}\n')
+    assert fingerprint_for(corpus, queries) != original
+
+
+def test_fingerprint_tolerates_a_missing_file(tmp_path):
+    """A missing corpus is reported by the loader with a line-accurate message; the
+    fingerprint must not be the thing that raises first."""
+    body = f"corpus:\n  path: {tmp_path / 'absent.jsonl'}\n  queries: {tmp_path / 'no.jsonl'}\n"
+    fingerprint = load(_profile(tmp_path, body), env={}).fingerprint()
+    assert fingerprint["corpus_sha256"] == "missing"
+    assert fingerprint["queries_sha256"] == "missing"

@@ -134,11 +134,17 @@ def evaluate_gate(
         # Comparing runs over different corpora or different k is meaningless, and
         # silently allowing it is how a gate ends up reporting a fake regression the
         # morning after someone adds golden queries.
+        differing = sorted(
+            key
+            for key in set(baseline_report.fingerprint) | set(candidate_report.fingerprint)
+            if baseline_report.fingerprint.get(key) != candidate_report.fingerprint.get(key)
+        )
         raise BaselineError(
-            "baseline and candidate are not comparable: "
-            f"baseline fingerprint {baseline_report.fingerprint} != "
-            f"candidate fingerprint {candidate_report.fingerprint}. "
-            "Re-record the baseline with 'ragate baseline' after changing the golden set."
+            "baseline and candidate are not comparable, these fingerprint fields differ: "
+            f"{', '.join(differing)}. baseline={baseline_report.fingerprint} "
+            f"candidate={candidate_report.fingerprint}. The corpus, the golden set, or k "
+            "changed, so the two metrics are not measuring the same thing. Re-record the "
+            "baseline with 'ragate baseline' and let the diff be reviewed."
         )
 
     deltas = _deltas(baseline_report, candidate_report, metric)

@@ -23,7 +23,6 @@ index:
 
 evaluate:
   k: 5
-  workers: 1
 
 gate:
   primary_metric: recall_at_k

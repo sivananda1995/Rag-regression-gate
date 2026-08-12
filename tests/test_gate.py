@@ -35,7 +35,7 @@ def _report(scores: dict[str, float], retrieved: dict[str, list[str]] | None = N
         config={"chunking": {"strategy": "fixed", "target_chars": 10, "overlap_chars": 0},
                 "embedder": {"provider": "hashing", "dimensions": 8, "idf_weighting": True},
                 "index": {"backend": "flat"}},
-        fingerprint={"corpus": {"path": "c", "queries": "q"}, "k": 5},
+        fingerprint={"corpus_sha256": "abc123", "queries_sha256": "def456", "k": 5},
     )
 
 
@@ -134,8 +134,8 @@ def test_blame_lists_documents_that_left_the_top_k():
 def test_mismatched_fingerprint_is_refused():
     baseline = _report({"q0": 1.0})
     candidate = _report({"q0": 1.0})
-    candidate.fingerprint = {"corpus": {"path": "other", "queries": "q"}, "k": 5}
-    with pytest.raises(BaselineError, match="not comparable"):
+    candidate.fingerprint = {"corpus_sha256": "abc123", "queries_sha256": "999999", "k": 5}
+    with pytest.raises(BaselineError, match="queries_sha256"):
         evaluate_gate(baseline, candidate, _cfg())
 
 

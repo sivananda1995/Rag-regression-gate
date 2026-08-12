@@ -8,6 +8,7 @@ and makes every knob visible in one place.
 
 from __future__ import annotations
 
+import hashlib
 import os
 from dataclasses import asdict, dataclass, field, fields
 from pathlib import Path
@@ -18,6 +19,22 @@ import yaml
 from .errors import ConfigError
 
 ENV_PREFIX = "RAGATE"
+
+
+def _sha256(path: str | Path) -> str:
+    """Short content hash of an evaluation input, or "missing" if it is absent.
+
+    Absent is not an error here: the loaders raise a clear CorpusError later, and a
+    fingerprint call should not be the thing that reports a missing file.
+    """
+    p = Path(path)
+    if not p.exists():
+        return "missing"
+    digest = hashlib.sha256()
+    with p.open("rb") as fh:
+        for block in iter(lambda: fh.read(1 << 16), b""):
+            digest.update(block)
+    return digest.hexdigest()[:16]
 
 
 @dataclass
@@ -80,7 +97,6 @@ class IndexConfig:
 @dataclass
 class EvaluateConfig:
     k: int = 5
-    workers: int = 1
 
     def validate(self) -> None:
         if self.k <= 0:
@@ -133,13 +149,19 @@ class Config:
         return asdict(self)
 
     def fingerprint(self) -> dict[str, Any]:
-        """The subset of config that changes retrieval results.
+        """Identity of the evaluation set, stored with every report.
 
-        Stored alongside a baseline so the gate can refuse to compare runs whose
-        corpus or k differ, which would make the comparison meaningless.
+        The gate refuses to compare two reports whose fingerprints differ, because a
+        metric measured on a different golden set is not a comparison.
+
+        Keyed on file content, not on file paths. An earlier version used the paths,
+        which got the dangerous case backwards: editing the corpus in place left the
+        fingerprint unchanged and the baseline silently stale, while moving a file to a
+        new directory invalidated a baseline that was still perfectly valid.
         """
         return {
-            "corpus": asdict(self.corpus),
+            "corpus_sha256": _sha256(self.corpus.path),
+            "queries_sha256": _sha256(self.corpus.queries),
             "k": self.evaluate.k,
         }
 

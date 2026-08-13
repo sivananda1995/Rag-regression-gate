@@ -2,7 +2,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from ragate.evaluate import EvalReport, run
+from ragate.config import GateConfig
+from ragate.evaluate import EvalReport, QueryResult, run
+from ragate.gate import evaluate_gate
+from ragate.report import blast_radius_sentence, render_markdown
 
 
 def test_end_to_end_run_scores_the_golden_set(config):
@@ -122,3 +125,58 @@ def test_retriever_mode_is_recorded_in_the_report(config):
     assert run(config).corpus_stats["retriever"] == "bm25"
     config.retriever.mode = "hybrid"
     assert run(config).corpus_stats["retriever"].startswith("hybrid:")
+
+
+def _synthetic_report(scores: dict[str, float]) -> EvalReport:
+    """A report with hand-chosen per-query scores, for exercising the gate's own reporting."""
+    return EvalReport(
+        ragate_version="test", generated_at="2026-08-13T00:00:00+00:00", k=5,
+        aggregate={"recall_at_k": sum(scores.values()) / len(scores)}, by_split={},
+        per_query=[
+            QueryResult(query_id=q, text=q, relevant_doc_ids=["gold"],
+                        retrieved_doc_ids=["gold"], scores={"recall_at_k": v})
+            for q, v in scores.items()
+        ],
+        corpus_stats={"documents": 2, "chunks": 4, "chunks_per_document": 2.0,
+                      "queries": len(scores), "mean_relevant_per_query": 1.0,
+                      "recall_at_k_ceiling": 1.0},
+        timings_ms={"total": 1.0},
+        config={"chunking": {"strategy": "fixed", "target_chars": 10, "overlap_chars": 0},
+                "embedder": {"provider": "hashing", "dimensions": 8, "idf_weighting": True},
+                "index": {"backend": "flat"}},
+        fingerprint={"corpus_sha256": "a", "queries_sha256": "b", "k": 5},
+    )
+
+
+_GATE = GateConfig(primary_metric="recall_at_k", max_absolute_drop=0.02,
+                   bootstrap_confidence=0.95, bootstrap_resamples=200, blame_threshold=0.5)
+
+
+def test_the_blast_radius_sentence_reports_both_directions_and_the_net():
+    verdict = evaluate_gate(_synthetic_report({"a": 1.0, "b": 1.0, "c": 0.0, "d": 1.0}),
+                            _synthetic_report({"a": 0.0, "b": 0.0, "c": 0.7, "d": 1.0}), _GATE)
+
+    sentence = blast_radius_sentence(verdict)
+
+    assert "2 of 4 questions" in sentence
+    assert "1 that had none now finds one" in sentence
+    assert "Net 1 question worse off, 25.0% of the golden set" in sentence
+    # The whole point of the sentence: do not let the reader quote the raw zero count.
+    assert "total count of zero-scoring queries" in sentence
+
+
+def test_the_blast_radius_sentence_says_so_when_nothing_crossed():
+    verdict = evaluate_gate(_synthetic_report({"a": 1.0, "b": 0.8}),
+                            _synthetic_report({"a": 0.9, "b": 0.8}), _GATE)
+
+    assert "No query crossed the line" in blast_radius_sentence(verdict)
+
+
+def test_the_markdown_report_carries_the_blast_radius():
+    verdict = evaluate_gate(_synthetic_report({"a": 1.0, "b": 1.0}),
+                            _synthetic_report({"a": 0.0, "b": 1.0}), _GATE)
+
+    markdown = render_markdown(_synthetic_report({"a": 0.0, "b": 1.0}), verdict)
+
+    assert "### Blast radius" in markdown
+    assert "1 of 2 questions" in markdown

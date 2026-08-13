@@ -62,10 +62,24 @@ class GateVerdict:
     queries_compared: int
     regressed_queries: list[QueryDelta]
     improved_queries: list[QueryDelta]
+    blanked_queries: list[QueryDelta]
+    recovered_queries: list[QueryDelta]
 
     @property
     def failed(self) -> bool:
         return self.status == FAIL
+
+    @property
+    def net_blanked(self) -> int:
+        """Queries that now return nothing correct, net of the ones that started returning it.
+
+        The number people reach for when estimating impact is the candidate's total count of
+        zero-scoring queries, and it is the wrong number: some of those were already zero on
+        the baseline, so the change did not break them. What a refactor actually costs is the
+        queries it moved from some correct document to none, less the ones it accidentally
+        fixed.
+        """
+        return len(self.blanked_queries) - len(self.recovered_queries)
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -204,6 +218,20 @@ def evaluate_gate(
     improved = sorted(
         [d for d in deltas if d.delta >= cfg.blame_threshold], key=lambda d: -d.delta
     )
+    # A score of zero on a retrieval metric is not a small number, it is a different kind of
+    # outcome: nothing correct came back at all, so the user sees an empty or wrong answer
+    # rather than a slightly worse ranking. Those queries are counted separately from the
+    # blame list because the aggregate hides them, and because the pair of counts is what
+    # makes an impact estimate honest. Sorted by query id, not by score, so two runs of the
+    # same comparison list them in the same order.
+    blanked = sorted(
+        [d for d in deltas if d.baseline > 0.0 and d.candidate == 0.0],
+        key=lambda d: d.query_id,
+    )
+    recovered = sorted(
+        [d for d in deltas if d.baseline == 0.0 and d.candidate > 0.0],
+        key=lambda d: d.query_id,
+    )
 
     verdict = GateVerdict(
         status=status,
@@ -220,6 +248,8 @@ def evaluate_gate(
         queries_compared=len(deltas),
         regressed_queries=regressed,
         improved_queries=improved,
+        blanked_queries=blanked,
+        recovered_queries=recovered,
     )
     log.info(
         "gate verdict",
@@ -231,6 +261,8 @@ def evaluate_gate(
             "delta": round(delta, 4),
             "ci": [round(ci_low, 4), round(ci_high, 4)],
             "regressed_queries": len(regressed),
+            "blanked_queries": len(blanked),
+            "recovered_queries": len(recovered),
         },
     )
     return verdict

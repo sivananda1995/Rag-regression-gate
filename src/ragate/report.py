@@ -25,6 +25,46 @@ def _fmt(value: float, places: int = 4) -> str:
     return f"{value:.{places}f}"
 
 
+def blast_radius_sentence(verdict: GateVerdict) -> str:
+    """Say how many questions changed from finding an answer to finding none, and back.
+
+    Written as a sentence rather than a metric because the two counts are only meaningful
+    together: quoting the candidate's total number of zero-scoring queries would charge the
+    change for queries that were already broken before it landed.
+    """
+    blanked, recovered = len(verdict.blanked_queries), len(verdict.recovered_queries)
+    if not blanked and not recovered:
+        return (
+            f"No query crossed the line between finding a correct document and finding none, "
+            f"in either direction, across {verdict.queries_compared} compared queries."
+        )
+    share = verdict.net_blanked / verdict.queries_compared if verdict.queries_compared else 0.0
+    parts = [
+        f"{blanked} of {verdict.queries_compared} questions had a correct document in the "
+        "top k before and have none now"
+        if blanked
+        else "No question lost its last correct document"
+    ]
+    if recovered:
+        parts.append(
+            f"{recovered} that had none now "
+            f"{'finds one' if recovered == 1 else 'find one'}"
+        )
+    net = verdict.net_blanked
+    direction = "worse off" if net > 0 else "better off"
+    tail = (
+        f" Net {abs(net)} {'question' if abs(net) == 1 else 'questions'} {direction}, "
+        f"{abs(share):.1%} of the golden set."
+        if net
+        else " Net zero: the same number of questions crossed in each direction."
+    )
+    reminder = (
+        " That net figure, not the candidate's total count of zero-scoring queries, is what "
+        "this change cost; the rest were already returning nothing before it landed."
+    )
+    return "; ".join(parts) + "." + tail + reminder
+
+
 def render_markdown(report: EvalReport, verdict: GateVerdict | None = None) -> str:
     lines: list[str] = []
     if verdict is not None:
@@ -63,6 +103,8 @@ def render_markdown(report: EvalReport, verdict: GateVerdict | None = None) -> s
         f"Wall time {report.timings_ms['total']} ms.",
         "",
     ]
+    if verdict is not None:
+        lines += ["### Blast radius", "", blast_radius_sentence(verdict), ""]
     if verdict is not None and verdict.regressed_queries:
         lines += [
             f"### Queries that lost ground ({len(verdict.regressed_queries)})",
@@ -126,8 +168,13 @@ def render_html(report: EvalReport, verdict: GateVerdict | None = None) -> str:
             f"{_fmt(verdict.ci_high, 3)}]</div></div>"
             f"<div class='tile'><div class='label'>queries compared</div>"
             f"<div class='value'>{verdict.queries_compared}</div></div>"
+            f"<div class='tile'><div class='label'>found something, now nothing</div>"
+            f"<div class='value {'neg' if verdict.net_blanked > 0 else 'pos'}'>"
+            f"{len(verdict.blanked_queries)}"
+            f"<span class='small'> / {len(verdict.recovered_queries)} back</span></div></div>"
             f"</div>"
             f"<p class='reason'>{html.escape(verdict.reason)}.</p>"
+            f"<p class='hint'>{html.escape(blast_radius_sentence(verdict))}</p>"
         )
         blame = (
             "<h2>Queries that lost ground</h2>"

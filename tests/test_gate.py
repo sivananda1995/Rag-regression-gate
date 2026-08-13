@@ -165,3 +165,52 @@ def test_verdict_is_reproducible_for_the_same_inputs():
 def test_missing_baseline_explains_how_to_create_one(tmp_path):
     with pytest.raises(BaselineError, match="ragate baseline"):
         load_baseline(tmp_path / "nope.json")
+
+
+def test_a_query_that_loses_its_last_correct_document_is_counted_apart_from_the_blame_list():
+    """The aggregate hides the difference between a rank slipping and an answer vanishing."""
+    baseline = _report({"a": 1.0, "b": 1.0, "c": 0.0, "d": 0.6})
+    candidate = _report({"a": 0.0, "b": 0.5, "c": 0.4, "d": 0.6})
+    cfg = GateConfig(primary_metric="recall_at_k", max_absolute_drop=0.02,
+                     bootstrap_confidence=0.95, bootstrap_resamples=200, blame_threshold=0.5)
+
+    verdict = evaluate_gate(baseline, candidate, cfg)
+
+    assert [d.query_id for d in verdict.blanked_queries] == ["a"]
+    assert [d.query_id for d in verdict.recovered_queries] == ["c"]
+    assert verdict.net_blanked == 0
+    # b lost half a point without going to zero, so it is blame-listed but not blanked.
+    assert "b" in [d.query_id for d in verdict.regressed_queries]
+    assert "b" not in [d.query_id for d in verdict.blanked_queries]
+
+
+def test_the_candidates_own_zero_count_is_not_what_the_gate_reports():
+    """Three queries score zero on the candidate, but two of them scored zero already.
+
+    This is the arithmetic the README got wrong: quoting the candidate's total charges a
+    change for breakage that predates it.
+    """
+    baseline = _report({"a": 1.0, "b": 0.0, "c": 0.0, "d": 1.0})
+    candidate = _report({"a": 0.0, "b": 0.0, "c": 0.0, "d": 1.0})
+    cfg = GateConfig(primary_metric="recall_at_k", max_absolute_drop=0.02,
+                     bootstrap_confidence=0.95, bootstrap_resamples=200, blame_threshold=0.5)
+
+    verdict = evaluate_gate(baseline, candidate, cfg)
+
+    candidate_zeros = sum(1 for q in candidate.per_query if q.scores["recall_at_k"] == 0.0)
+    assert candidate_zeros == 3
+    assert len(verdict.blanked_queries) == 1
+    assert verdict.net_blanked == 1
+
+
+def test_blanked_queries_are_ordered_by_id_so_two_runs_agree():
+    baseline = _report({f"q{i}": 1.0 for i in range(6)})
+    candidate = _report({f"q{i}": 0.0 for i in range(6)})
+    cfg = GateConfig(primary_metric="recall_at_k", max_absolute_drop=0.02,
+                     bootstrap_confidence=0.95, bootstrap_resamples=200, blame_threshold=0.5)
+
+    verdict = evaluate_gate(baseline, candidate, cfg)
+
+    ids = [d.query_id for d in verdict.blanked_queries]
+    assert ids == sorted(ids)
+    assert verdict.net_blanked == 6

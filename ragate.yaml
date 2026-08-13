@@ -21,6 +21,24 @@ index:
   backend: flat               # flat | faiss
   metric: cosine
 
+retriever:
+  # bm25, not hybrid. Fusing the local dense retriever was measured and rejected: it
+  # beat bm25 on zero of the 140 golden queries. See docs/adr/ADR-004.
+  mode: bm25                  # dense | bm25 | hybrid
+  bm25_k1: 1.5
+  bm25_b: 0.75
+  bm25_weight: 1.0
+  dense_weight: 1.0
+  rrf_k: 60                   # reciprocal rank fusion damping constant
+  candidate_multiplier: 4     # each component retrieves k * this before fusion
+
+rerank:
+  # Document-level learned reranker, trained on the train split only.
+  # Held-out recall@5 0.9070 without it, 0.9535 with it. See docs/adr/ADR-005.
+  enabled: true
+  model_path: models/reranker.json
+  depth: 40                   # how many candidates the reranker rescores
+
 evaluate:
   k: 5
 

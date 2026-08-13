@@ -95,8 +95,50 @@ class IndexConfig:
 
 
 @dataclass
+class RetrieverConfig:
+    mode: str = "bm25"            # dense | bm25 | hybrid
+    bm25_k1: float = 1.5
+    bm25_b: float = 0.75
+    bm25_weight: float = 1.0
+    dense_weight: float = 1.0
+    rrf_k: int = 60
+    # How much deeper than k each component retrieves before fusion.
+    candidate_multiplier: int = 4
+
+    def validate(self) -> None:
+        if self.mode not in {"dense", "bm25", "hybrid"}:
+            raise ConfigError(f"unknown retriever mode: {self.mode}")
+        if self.bm25_k1 < 0:
+            raise ConfigError("retriever.bm25_k1 must not be negative")
+        if not 0.0 <= self.bm25_b <= 1.0:
+            raise ConfigError("retriever.bm25_b must be between 0 and 1")
+        if self.rrf_k < 1:
+            raise ConfigError("retriever.rrf_k must be at least 1")
+        if self.candidate_multiplier < 1:
+            raise ConfigError("retriever.candidate_multiplier must be at least 1")
+        if self.mode == "hybrid" and self.bm25_weight <= 0 and self.dense_weight <= 0:
+            raise ConfigError("hybrid retrieval needs a positive weight on a component")
+
+
+@dataclass
+class RerankConfig:
+    enabled: bool = True
+    model_path: str = "models/reranker.json"
+    # How many fused candidates the reranker rescores. Beyond this depth the original
+    # order is kept, so the reranker can only reorder what retrieval already found.
+    depth: int = 40
+
+    def validate(self) -> None:
+        if self.depth < 1:
+            raise ConfigError("rerank.depth must be at least 1")
+
+
+@dataclass
 class EvaluateConfig:
     k: int = 5
+    # Optional query-id split file. When present, the report carries per-split
+    # aggregates so a claim can cite the half that nothing was fitted on.
+    splits_path: str = "data/splits.json"
 
     def validate(self) -> None:
         if self.k <= 0:
@@ -133,6 +175,8 @@ class Config:
     chunking: ChunkingConfig = field(default_factory=ChunkingConfig)
     embedder: EmbedderConfig = field(default_factory=EmbedderConfig)
     index: IndexConfig = field(default_factory=IndexConfig)
+    retriever: RetrieverConfig = field(default_factory=RetrieverConfig)
+    rerank: RerankConfig = field(default_factory=RerankConfig)
     evaluate: EvaluateConfig = field(default_factory=EvaluateConfig)
     gate: GateConfig = field(default_factory=GateConfig)
     logging: LoggingConfig = field(default_factory=LoggingConfig)
@@ -165,6 +209,15 @@ class Config:
             "k": self.evaluate.k,
         }
 
+    def provenance(self) -> dict[str, Any]:
+        """Identity of things that change a claim but not the comparison itself.
+
+        Kept out of the fingerprint on purpose: a new train/eval split makes previously
+        published gains stale, but it does not make two runs incomparable, and blocking
+        the gate over it would punish the wrong action.
+        """
+        return {"splits_sha256": _sha256(self.evaluate.splits_path)}
+
 
 def _coerce(current: Any, raw: str) -> Any:
     if isinstance(current, bool):
@@ -181,6 +234,47 @@ def _coerce(current: Any, raw: str) -> Any:
     return raw
 
 
+_MAX_EXTENDS_DEPTH = 5
+
+
+def _read_profile(path: Path, depth: int = 0) -> dict[str, Any]:
+    """Read a YAML profile, resolving an optional `extends` parent first.
+
+    Candidate profiles exist to make one pipeline change reviewable in a pull request. A
+    profile that has to restate all seven sections to change one value buries that
+    change, and the copies drift. With `extends`, a candidate is the parent path plus the
+    lines that differ, which is exactly what a reviewer wants to read. Parent paths
+    resolve relative to the child, so configs/x.yaml can extend ../ragate.yaml.
+    """
+    if depth > _MAX_EXTENDS_DEPTH:
+        raise ConfigError(
+            f"config extends chain deeper than {_MAX_EXTENDS_DEPTH} at {path}, "
+            "which usually means two profiles extend each other"
+        )
+    try:
+        raw = yaml.safe_load(path.read_text()) or {}
+    except yaml.YAMLError as exc:
+        raise ConfigError(f"{path} is not valid YAML: {exc}") from exc
+    if not isinstance(raw, dict):
+        raise ConfigError(f"{path} must contain a mapping at the top level")
+
+    parent_ref = raw.pop("extends", None)
+    if parent_ref is None:
+        return raw
+    if not isinstance(parent_ref, str):
+        raise ConfigError(f"{path}: extends must be a path string")
+    parent_path = (path.parent / parent_ref).resolve()
+    if not parent_path.exists():
+        raise ConfigError(f"{path}: extends target does not exist: {parent_path}")
+    merged = _read_profile(parent_path, depth + 1)
+    for section_name, values in raw.items():
+        if isinstance(values, dict) and isinstance(merged.get(section_name), dict):
+            merged[section_name] = {**merged[section_name], **values}
+        else:
+            merged[section_name] = values
+    return merged
+
+
 def load(path: str | Path | None = "ragate.yaml", env: dict[str, str] | None = None) -> Config:
     """Build a validated Config from a YAML profile plus environment overrides."""
     env = os.environ if env is None else env
@@ -189,12 +283,7 @@ def load(path: str | Path | None = "ragate.yaml", env: dict[str, str] | None = N
     if path is not None:
         p = Path(path)
         if p.exists():
-            try:
-                raw = yaml.safe_load(p.read_text()) or {}
-            except yaml.YAMLError as exc:
-                raise ConfigError(f"{p} is not valid YAML: {exc}") from exc
-            if not isinstance(raw, dict):
-                raise ConfigError(f"{p} must contain a mapping at the top level")
+            raw = _read_profile(p)
             for section_name, values in raw.items():
                 if not hasattr(config, section_name):
                     raise ConfigError(f"unknown config section: {section_name}")

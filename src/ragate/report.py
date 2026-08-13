@@ -217,9 +217,11 @@ def render_html(report: EvalReport, verdict: GateVerdict | None = None) -> str:
   {blame}
   <footer>Chunking {html.escape(str(report.config['chunking']['strategy']))}
     {report.config['chunking']['target_chars']}/{report.config['chunking']['overlap_chars']} chars
+    &nbsp;&middot;&nbsp; retriever
+    {html.escape(str(report.corpus_stats.get('retriever', 'unknown')))}
+    &nbsp;&middot;&nbsp; reranked {str(report.corpus_stats.get('reranked', False)).lower()}
     &nbsp;&middot;&nbsp; embedder {html.escape(str(report.config['embedder']['provider']))}
     d={report.config['embedder']['dimensions']}
-    idf={str(report.config['embedder']['idf_weighting']).lower()}
     &nbsp;&middot;&nbsp; index {html.escape(str(report.config['index']['backend']))}
     &nbsp;&middot;&nbsp; python {html.escape(report.environment.get('python', 'unknown'))}</footer>
 </body></html>

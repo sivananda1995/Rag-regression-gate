@@ -19,11 +19,11 @@ from typing import Any
 from . import __version__
 from .config import Config
 from .corpus import build_index_units, chunk_documents, load_documents, load_queries
-from .embedders import build_embedder
 from .errors import RagateError
-from .indexes import build_index
 from .logging_setup import get_logger
 from .metrics import METRICS, dedupe_preserving_rank
+from .rerank import FeatureContext, LinearReranker
+from .retrievers import build_retriever
 
 log = get_logger(__name__)
 
@@ -43,6 +43,7 @@ class EvalReport:
     generated_at: str
     k: int
     aggregate: dict[str, float]
+    by_split: dict[str, dict[str, float]]
     per_query: list[QueryResult]
     corpus_stats: dict[str, Any]
     timings_ms: dict[str, float]
@@ -80,6 +81,34 @@ def _ceiling(relevant_counts: list[int], k: int) -> float:
     return sum(min(count, k) / count for count in relevant_counts) / len(relevant_counts)
 
 
+def _split_aggregates(
+    results: list[QueryResult], splits_path: str
+) -> dict[str, dict[str, float]]:
+    """Per-split metric means, so a gain can be quoted on queries nothing was fitted on.
+
+    A missing splits file is not an error: the split is an optional discipline, and a
+    consumer pointing the gate at their own golden set has no reason to have one.
+    """
+    p = Path(splits_path) if splits_path else None
+    if p is None or not p.exists():
+        return {}
+    payload = json.loads(p.read_text())
+    by_id = {r.query_id: r for r in results}
+    out: dict[str, dict[str, float]] = {}
+    for split_name in ("train", "eval"):
+        ids = [qid for qid in payload.get(split_name, []) if qid in by_id]
+        if not ids:
+            continue
+        out[split_name] = {
+            "queries": float(len(ids)),
+            **{
+                name: sum(by_id[qid].scores[name] for qid in ids) / len(ids)
+                for name in METRICS
+            },
+        }
+    return out
+
+
 def run(cfg: Config) -> EvalReport:
     t0 = time.perf_counter()
     documents = load_documents(cfg.corpus.path)
@@ -90,34 +119,49 @@ def run(cfg: Config) -> EvalReport:
     units = build_index_units(chunks, cfg.chunking.dedupe_identical)
     t_chunk = time.perf_counter()
 
-    embedder = build_embedder(cfg.embedder)
-    chunk_texts = [u.text for u in units]
-    embedder.fit(chunk_texts)
-    chunk_vectors = embedder.encode(chunk_texts)
-    t_embed_corpus = time.perf_counter()
-
-    index = build_index(cfg.index)
-    index.build(chunk_vectors)
+    retriever = build_retriever(cfg)
+    retriever.fit(units)
     t_build = time.perf_counter()
 
-    query_vectors = embedder.encode([q.text for q in queries])
-    t_embed_queries = time.perf_counter()
-
     k = cfg.evaluate.k
-    # Retrieval is over chunks, so more than k chunks are pulled to leave room for
-    # several chunks of the same document collapsing into one document slot.
-    chunk_k = min(len(units), max(k * 4, k + 10))
-    _, indices = index.search(query_vectors, chunk_k)
+    # Retrieval runs over chunks, so more than k units are pulled: several units of the
+    # same document collapse into one document slot, and the reranker needs candidates
+    # below the cut to be able to promote anything.
+    unit_k = min(len(units), max(k * 4, k + 10, cfg.rerank.depth if cfg.rerank.enabled else 0))
+    rankings = retriever.search([q.text for q in queries], unit_k)
     t_search = time.perf_counter()
+
+    reranker = None
+    feature_ctx = None
+    if cfg.rerank.enabled:
+        reranker = LinearReranker.load(cfg.rerank.model_path)
+        feature_ctx = FeatureContext.build(units)
+    t_rerank_start = time.perf_counter()
+
+    document_rankings: list[list[str]] = []
+    for row in range(len(queries)):
+        if reranker is not None and feature_ctx is not None:
+            document_rankings.append(
+                reranker.rank_documents(
+                    queries[row].text,
+                    rankings[row][: cfg.rerank.depth],
+                    units,
+                    feature_ctx,
+                )
+            )
+        else:
+            document_rankings.append(
+                dedupe_preserving_rank(
+                    doc_id
+                    for unit_index, _score in rankings[row]
+                    for doc_id in units[unit_index].doc_ids
+                )
+            )
+    t_rerank = time.perf_counter()
 
     results: list[QueryResult] = []
     for row, query in enumerate(queries):
-        ranked_doc_ids = dedupe_preserving_rank(
-            doc_id
-            for i in indices[row]
-            if int(i) >= 0
-            for doc_id in units[int(i)].doc_ids
-        )[:k]
+        ranked_doc_ids = document_rankings[row][:k]
         scores = {
             name: float(fn(ranked_doc_ids, query.relevant_doc_ids, k))
             for name, fn in METRICS.items()
@@ -138,14 +182,18 @@ def run(cfg: Config) -> EvalReport:
     aggregate = {
         name: sum(r.scores[name] for r in results) / len(results) for name in METRICS
     }
+    by_split = _split_aggregates(results, cfg.evaluate.splits_path)
     relevant_counts = [len(r.relevant_doc_ids) for r in results]
     report = EvalReport(
         ragate_version=__version__,
         generated_at=datetime.now(timezone.utc).isoformat(timespec="seconds"),
         k=k,
         aggregate=aggregate,
+        by_split=by_split,
         per_query=results,
         corpus_stats={
+            "retriever": retriever.name,
+            "reranked": bool(reranker),
             "documents": len(documents),
             "chunks": len(chunks),
             "index_units": len(units),
@@ -158,10 +206,9 @@ def run(cfg: Config) -> EvalReport:
         timings_ms={
             "load": round((t_load - t0) * 1000, 1),
             "chunk": round((t_chunk - t_load) * 1000, 1),
-            "embed_corpus": round((t_embed_corpus - t_chunk) * 1000, 1),
-            "index_build": round((t_build - t_embed_corpus) * 1000, 1),
-            "embed_queries": round((t_embed_queries - t_build) * 1000, 1),
-            "search": round((t_search - t_embed_queries) * 1000, 1),
+            "retriever_build": round((t_build - t_chunk) * 1000, 1),
+            "search": round((t_search - t_build) * 1000, 1),
+            "rerank": round((t_rerank - t_rerank_start) * 1000, 1),
             "total": round((time.perf_counter() - t0) * 1000, 1),
         },
         config=cfg.as_dict(),
@@ -174,6 +221,8 @@ def run(cfg: Config) -> EvalReport:
     log.info(
         "evaluation complete",
         extra={
+            "retriever": retriever.name,
+            "reranked": bool(reranker),
             "recall_at_k": round(aggregate["recall_at_k"], 4),
             "ndcg_at_k": round(aggregate["ndcg_at_k"], 4),
             "ceiling": report.corpus_stats["recall_at_k_ceiling"],

@@ -290,8 +290,10 @@ differs, moved recall@5 from 0.828929 to 0.830714.
 The fix was to stop leaving the decision to the sort, in `src/ragate/ranking.py`: quantise
 scores to 9 decimals before comparing, then rank with `lexsort` using the index as an explicit
 secondary key. Query terms are now summed in sorted order too, since floating-point addition
-is not associative. The ranking is now identical under perturbations of 1e-12 and 1e-9, and under both numpy
-1.26.4 and 2.4.4 to six decimal places, and `tests/test_ranking.py` asserts the perturbation
+is not associative. The ranking is now identical under perturbations of 1e-12 and 1e-9, under both numpy
+1.26.4 and 2.4.4 to six decimal places, and bit-identical across BLAS thread counts of 1, 2, 4
+and 8 combined with four interpreter hash seeds, which is the closest local proxy for a runner
+that dispatches different CPU kernels. `tests/test_ranking.py` asserts the perturbation
 property so it cannot regress. It costs a full sort instead of a partition,
 which roughly doubled p95 latency at the largest index size, and that is a trade I would make
 again without thinking about it: [ADR-006](docs/adr/ADR-006-deterministic-ranking.md).

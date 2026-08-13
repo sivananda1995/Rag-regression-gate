@@ -85,7 +85,12 @@ That was a second, smaller source of the same class of problem.
   noise levels. `tests/test_ranking.py` asserts this, along with tie ordering, so the property
   cannot regress silently.
 - Cross-version agreement is now checkable rather than hoped for: the three committed profiles
-  produce identical recall to six decimal places under numpy 1.26.4 and 2.4.4.
+  produce identical recall to six decimal places under numpy 1.26.4 and 2.4.4. The candidate
+  profile is also bit-identical across BLAS thread counts of 1, 2, 4 and 8 crossed with four
+  interpreter hash seeds, which is the nearest available proxy for the runner's different CPU
+  dispatch: `OMP_NUM_THREADS=$t OPENBLAS_NUM_THREADS=$t MKL_NUM_THREADS=$t ragate -c
+  configs/candidate-fixed-chunking.yaml eval -o /tmp/$t.json`. Before the fix, a 1e-12
+  perturbation was enough to move the metric; after it, nothing local moves it at all.
 - Every number in the README moved slightly, because the tie ordering changed. That is
   expected and the new values are the reproducible ones. The candidate profile now scores
   0.8762 everywhere rather than 0.8794 here and 0.8826 there.

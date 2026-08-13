@@ -90,7 +90,8 @@ def main() -> None:
     pages = [
         ("fail-regression.html", "gate_fail_report.png", 1360, True),
         ("warn-borderline.html", "gate_warn_report.png", 1360, False),
-        ("pass-improvement.html", "gate_pass_report.png", 1360, False),
+        ("pass-reranker-gain.html", "gate_pass_report.png", 1360, False),
+        ("fail-no-reranker.html", "gate_no_reranker_report.png", 1360, False),
     ]
     terminal = _terminal_html(
         "ci: retrieval gate step",

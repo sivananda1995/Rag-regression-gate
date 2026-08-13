@@ -14,3 +14,9 @@ build/
 # Generated report artifacts (baselines are committed on purpose, reports are not)
 reports/
 benchmark/results/*.tmp
+# Video intermediates; the mp4, gif, and manifest are committed
+docs/video/_raw/
+docs/video/_player.html
+docs/video/_palette.png
+build/
+junit.xml

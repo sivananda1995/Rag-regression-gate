@@ -23,6 +23,12 @@ Retrieval pipelines fail quietly. A model swap, a chunk-size tweak, or a normali
 
 The default pipeline scores recall@5 of 0.9438 across all 140 golden queries against a theoretical ceiling of 0.9976, with nDCG@5 of 0.9340 and MRR@5 of 0.9268, and a full gate run takes about a quarter of a second. Every tunable in it was fitted on a 97-query train split and every gain is quoted on the 43 held-out queries it was not fitted on. All four gate outcomes are reproduced by `tools/run_demo.sh`, the screenshots below are that script's output, and `make verify` re-measures every number in this document and fails if any of them has moved.
 
+## Watch it work (30 seconds)
+
+![Animated demo: the gate scoring a golden set, blocking a chunking regression with exit code 1, declining to block a borderline drop, and confirming the reranker as a real improvement](docs/video/gate-demo.gif)
+
+Every line of terminal text above is the real stdout and stderr of the command shown with it, captured by `tools/record_demo.py`, with each segment's reveal paced by that command's measured wall time. It is a replay of a captured session rather than a live screen recording, and `docs/video/manifest.json` lists each command with its exit code and measured duration. Higher-quality MP4: [`docs/video/gate-demo.mp4`](docs/video/gate-demo.mp4).
+
 ## The four outcomes on real runs
 
 **A regression, blocked. Exit code 1.** Fixed-size chunking: recall@5 0.9438 to 0.8794, delta -0.0644, 95% interval `[-0.1017, -0.0318]`, status FAIL, with 10 queries named in the blame table.
@@ -45,6 +51,8 @@ $ make prove-reranker
 recall_at_k rose 0.0305 and the 95% interval [0.0071, 0.0600] excludes zero,
 so the gain is larger than this golden set's run-to-run noise.
 ```
+
+![Gate report for the reranker-disabled candidate, showing a FAIL verdict and the five queries that lost their document](docs/screenshots/gate_no_reranker_report.png)
 
 ## Architecture
 
@@ -125,7 +133,7 @@ That last row matters and is easy to get wrong in the other direction. Leakage i
 | PyYAML with an `extends` key | Config profiles | A candidate pipeline is the lines that differ from `ragate.yaml`, so the pull request diff is the change itself rather than a forty-line copy that drifts |
 | pytest, pytest-cov | 159 tests, 92% line coverage | Metrics and BM25 are asserted against hand computation, so a refactor cannot quietly redefine recall |
 | ruff | Lint and import order | One fast tool, runs on every commit |
-| Playwright with Chromium | Screenshots and the demo video, in `tools/` | Every image in this README is rendered from the tool's real output, so the documentation cannot drift from the behaviour |
+| Playwright with Chromium, ffmpeg | Screenshots and the demo video, in `tools/` | Every image and the video in this README are rendered from the tool's real output, so the documentation cannot drift from the behaviour |
 | matplotlib | Benchmark charts | Generated from `benchmark/results/*.json`, never drawn by hand |
 | GitHub Actions composite action | Distribution | `action.yml` makes adoption five lines in another repository, which is the difference between a demo and a tool |
 

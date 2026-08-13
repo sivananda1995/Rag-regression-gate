@@ -12,7 +12,10 @@ lint: ## ruff
 	ruff check .
 
 test: ## run the suite with coverage
-	pytest --cov=ragate --cov-report=term --cov-report=xml -q
+	# python -m pytest, not bare pytest: a pytest installed as a standalone tool
+	# (pipx, uv tool install) shadows the one in this environment and cannot see
+	# pytest-cov, which fails with "unrecognized arguments: --cov".
+	python -m pytest --cov=ragate --cov-report=term --cov-report=xml -q
 
 baseline: ## re-record the committed baseline (review the diff before committing it)
 	ragate baseline

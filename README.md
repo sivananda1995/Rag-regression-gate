@@ -2,8 +2,8 @@
 
 **A CI gate that blocks a pull request when RAG retrieval quality drops, and confirms when a change genuinely improved it, using a tolerance plus a paired bootstrap so noise on a small golden set cannot cry wolf.**
 
-[![ci](https://github.com/USERNAME/rag-regression-gate/actions/workflows/ci.yml/badge.svg)](https://github.com/USERNAME/rag-regression-gate/actions/workflows/ci.yml)
-[![tests 170](https://img.shields.io/badge/tests-170-2a78d6)](#tests-coverage-and-receipts)
+[![ci](https://github.com/sivananda1995/Rag-regression-gate/actions/workflows/ci.yml/badge.svg)](https://github.com/sivananda1995/Rag-regression-gate/actions/workflows/ci.yml)
+[![tests 186](https://img.shields.io/badge/tests-186-2a78d6)](#tests-coverage-and-receipts)
 [![coverage 92%](https://img.shields.io/badge/coverage-92%25-2a78d6)](#tests-coverage-and-receipts)
 [![readme numbers machine checked](https://img.shields.io/badge/readme%20numbers-machine%20checked-1baf7a)](#every-number-here-is-checked-by-ci)
 [![catches a 6.8pt recall drop](https://img.shields.io/badge/demo-catches%20a%206.8pt%20recall%405%20drop-e34948)](#the-four-outcomes-on-real-runs)
@@ -11,17 +11,17 @@
 
 ## What this solves
 
-- **A chunker or model change silently breaks retrieval and nothing fails.** This gate scores a labeled golden set on every pull request and exits non-zero on a real drop: in the included demo it catches a fixed-size chunking change that costs 6.8 points of recall@5 and takes 10 of 140 questions from answered to unanswered.
+- **A chunker or model change silently breaks retrieval and nothing fails.** This gate scores a labeled golden set on every pull request and exits non-zero on a real drop: in the included demo it catches a fixed-size chunking change that costs 6.8 points of recall@5 and takes 5 of 140 questions from answered to unanswered.
 - **Threshold-only gates fire on noise, so teams switch them off.** A drop must clear the agreed tolerance *and* a 95% paired bootstrap interval that excludes zero. The included borderline case, a drop of -0.0152 with interval `[-0.0386, 0.0024]`, is reported as WARN with an instruction to enlarge the golden set, not as a failed build.
 - **"Recall went up" is an argument until someone measures it.** The same machinery confirms improvements: the reranker in this repository earns +0.0305 recall@5 with interval `[0.0071, 0.0600]`, and that is why it shipped. Two other plausible improvements were measured and thrown away, which is documented below.
 
 ## Executive summary
 
-Retrieval pipelines fail quietly. A model swap, a chunk-size tweak, or a normalisation change moves which documents come back, and usually nothing in CI notices, because the unit tests still pass and the service still returns 200. The failure surfaces later as users not finding answers. In this repository's own demo, one plausible refactor, sentence-window chunking replaced by fixed 240-character slices, drops recall@5 from 0.9438 to 0.8762 and leaves 10 of 140 labeled questions with no correct document in the top 5. On a support search handling 5,000 queries a day, that ratio works out to roughly 360 searches a day that stop finding their answer; the 5,000 is an assumption, the 7.1% is measured.
+Retrieval pipelines fail quietly. A model swap, a chunk-size tweak, or a normalisation change moves which documents come back, and usually nothing in CI notices, because the unit tests still pass and the service still returns 200. The failure surfaces later as users not finding answers. In this repository's own demo, one plausible refactor, sentence-window chunking replaced by fixed 240-character slices, drops recall@5 from 0.9438 to 0.8762. Underneath that average: 5 questions that had a correct document in the top 5 now have none, and 1 that had none now finds one, so the change leaves a net 2.9% of the golden set answerless. 11 questions score zero after the refactor, but only those 5 are its fault; the rest were already returning nothing before it landed, and quoting the total would charge this change for breakage it did not cause. On a support search handling 5,000 queries a day, the net share is roughly 140 searches a day that stop finding their answer; the 5,000 is an assumption, every other number in this paragraph is measured and re-measured in CI.
 
 `ragate` turns retrieval quality into a build status. It scores a labeled golden set through a configurable pipeline (chunker, retriever, reranker), records per-query scores, and compares a candidate run against a baseline committed to git and reviewed in the pull request like any other file. Failing a build needs two independent conditions: the metric must fall further than the tolerance the team agreed on, and a paired bootstrap over per-query differences must place the whole confidence interval below zero. When only the first holds, the gate says so and asks for more golden queries rather than blocking anyone.
 
-The default pipeline scores recall@5 of 0.9438 across all 140 golden queries against a theoretical ceiling of 0.9976, with nDCG@5 of 0.9340 and MRR@5 of 0.9268, and a full gate run takes about a quarter of a second. Every tunable in it was fitted on a 97-query train split and every gain is quoted on the 43 held-out queries it was not fitted on. All four gate outcomes are reproduced by `tools/run_demo.sh`, the screenshots below are that script's output, and `make verify` re-measures every number in this document and fails if any of them has moved.
+The default pipeline scores recall@5 of 0.9438 across all 140 golden queries against a theoretical ceiling of 0.9976, with nDCG@5 of 0.9340 and MRR@5 of 0.9268, and a full gate run takes about a quarter of a second. Every tunable in it was fitted on a 97-query train split and every gain is quoted on the 43 held-out queries it was not fitted on. All four gate outcomes are reproduced by `tools/run_demo.sh`, the screenshots below are that script's output, and `make verify` re-measures every number quoted in this document, in `ragate.yaml`, and in two other files that cite a measurement, and fails if any of them has moved.
 
 ## Watch it work (30 seconds)
 
@@ -31,7 +31,7 @@ Every line of terminal text above is the real stdout and stderr of the command s
 
 ## The four outcomes on real runs
 
-**A regression, blocked. Exit code 1.** Fixed-size chunking: recall@5 0.9438 to 0.8762, delta -0.0676, 95% interval `[-0.1058, -0.0340]`, status FAIL, with 10 queries named in the blame table.
+**A regression, blocked. Exit code 1.** Fixed-size chunking: recall@5 0.9438 to 0.8762, delta -0.0676, 95% interval `[-0.1058, -0.0340]`, status FAIL, with 11 queries named in the blame table and the blast radius stated separately, because a query that lost its last correct document is a different event from one that slipped a rank.
 
 ![Gate report for a confirmed regression, showing the metric drop, the bootstrap interval, and the per-query blame table naming the documents that fell out of the top five](docs/screenshots/gate_fail_report.png)
 
@@ -43,7 +43,7 @@ Every line of terminal text above is the real stdout and stderr of the command s
 
 ![Gate report for a borderline drop, showing a WARN verdict and a confidence interval that includes zero](docs/screenshots/gate_warn_report.png)
 
-**An improvement, confirmed rather than argued.** Run the current pipeline against the pre-reranker baseline and the gate reports +0.0305 with interval `[0.0071, 0.0600]`, which excludes zero. Read the other way, turning the reranker off is itself a regression: recall@5 0.9133, delta -0.0305, interval `[-0.0600, -0.0071]`, status FAIL, 5 queries affected. That is how the reranker earned its place in the default configuration.
+**An improvement, confirmed rather than argued.** Run the current pipeline against the pre-reranker baseline and the gate reports +0.0305 with interval `[0.0071, 0.0600]`, which excludes zero. Read the other way, turning the reranker off is itself a regression: recall@5 0.9133, delta -0.0305, interval `[-0.0600, -0.0071]`, status FAIL again, with 5 queries affected. That is how the reranker earned its place in the default configuration.
 
 ```
 $ make prove-reranker
@@ -131,7 +131,7 @@ That last row matters and is easy to get wrong in the other direction. Leakage i
 | FAISS HNSW (optional) | Second index backend | Lets the approximate-search penalty be measured deliberately rather than absorbed into the gate's noise floor (ADR-001) |
 | scikit-learn (dev only) | Trains the reranker | Training is a developer task; inference is 20 lines of numpy, so adopting the gate does not drag scikit-learn into a CI image |
 | PyYAML with an `extends` key | Config profiles | A candidate pipeline is the lines that differ from `ragate.yaml`, so the pull request diff is the change itself rather than a forty-line copy that drifts |
-| pytest, pytest-cov | 170 tests, 92% line coverage | Metrics and BM25 are asserted against hand computation, so a refactor cannot quietly redefine recall |
+| pytest, pytest-cov | 186 tests, 92% line coverage | Metrics and BM25 are asserted against hand computation, so a refactor cannot quietly redefine recall |
 | ruff | Lint and import order | One fast tool, runs on every commit |
 | Playwright with Chromium, ffmpeg | Screenshots and the demo video, in `tools/` | Every image and the video in this README are rendered from the tool's real output, so the documentation cannot drift from the behaviour |
 | matplotlib | Benchmark charts | Generated from `benchmark/results/*.json`, never drawn by hand |
@@ -142,15 +142,15 @@ That last row matters and is easy to get wrong in the other direction. Leakage i
 Prerequisites: Python 3.10 or newer, `git`, and about 200 MB of disk for the optional FAISS extra.
 
 ```bash
-git clone https://github.com/USERNAME/rag-regression-gate.git
-cd rag-regression-gate
+git clone https://github.com/sivananda1995/Rag-regression-gate.git
+cd Rag-regression-gate
 python -m venv .venv && source .venv/bin/activate    # Windows: .venv\Scripts\activate
 pip install -e ".[dev,faiss,train]"
 
 ragate eval -o reports/candidate.json   # score the golden set
 ragate gate                             # compare against the committed baseline, exit 0
 make demo                               # reproduce all four gate outcomes, one exits 1
-make verify                             # lint, 159 tests, and re-measure every readme number
+make verify                             # lint, 186 tests, and re-measure every documented number
 ```
 
 `make help` lists every target. The corpus regenerates deterministically (`python data/generate_corpus.py --docs 420 --queries 140 --seed 20260812` reproduces the committed files byte for byte), and so do the split, the reranker, the benchmarks, and the charts.
@@ -165,7 +165,7 @@ git add baselines/baseline.json && git commit -m "chore(baseline): record retrie
 In another repository, as a step:
 
 ```yaml
-- uses: USERNAME/rag-regression-gate@main
+- uses: sivananda1995/Rag-regression-gate@main
   with:
     config: ragate.yaml
     baseline: baselines/baseline.json
@@ -194,7 +194,7 @@ The distribution is tighter than it used to be as well: p99 is now 1.28x p50 rat
 
 ## Tests, coverage, and receipts
 
-170 tests, 92% line coverage, measured with `pytest --cov=ragate`. CI enforces a 90% floor by parsing `coverage.xml`, so the badge cannot rot. The uncovered remainder is dominated by two adapters that cannot be exercised where this was built: the OpenAI embedding provider and the Anthropic reranker both need network access the build environment does not have. Their error paths and pure logic are tested, their request paths are not, and no number in this README comes from either.
+186 tests, 92% line coverage, measured with `pytest --cov=ragate`. CI enforces a 90% floor by parsing `coverage.xml`, so the badge cannot rot. The uncovered remainder is dominated by two adapters that cannot be exercised where this was built: the OpenAI embedding provider and the Anthropic reranker both need network access the build environment does not have. Their error paths and pure logic are tested, their request paths are not, and no number in this README comes from either.
 
 ### Every number here is checked by CI
 
@@ -204,7 +204,14 @@ A README quotes a measurement, the code changes, the number stays, and a year la
 make receipts     # or: python tools/collect_metrics.py && python tools/check_readme_numbers.py
 ```
 
-`tools/collect_metrics.py` re-runs the pipeline, the gate scenarios, the tuning sweep, the reranker training, the rejected experiment, both benchmarks, and the test suite, then writes every resulting value to `docs/metrics.json` with the exact command that produced it. `tools/check_readme_numbers.py` asserts this README still contains each current value and fails with a list of stale ones. Both run in CI, so a number that moves breaks the build exactly like a failing test.
+`tools/collect_metrics.py` re-runs the pipeline, the gate scenarios, the tuning sweep, the reranker training, the rejected experiment, both benchmarks, and the test suite, then writes every resulting value to `docs/metrics.json` with the exact command that produced it. `tools/check_readme_numbers.py` then asserts that every one of those values still appears where it is claimed, and fails with a list of stale ones. Both run in CI, so a number that moves breaks the build exactly like a failing test.
+
+Two properties of the check matter more than the idea of it, and both were added after the first version failed to catch anything:
+
+- **Values are pinned to the sentence that makes the claim, not to the file.** A metric registers an anchor phrase, `"{} queries named in the blame table"`, and the check requires that exact string. Searching a long document for `11` always succeeds, which is how a sentence saying 10 survived a check that reported "every number matches".
+- **Every file that quotes a measurement is checked, not just this one.** `checked_documents` in the registry currently covers the README, `ragate.yaml`, one candidate profile, and one module docstring, because those were the places where measured numbers had already gone stale unnoticed.
+
+A metric whose display string is too short to search for and which declares no anchor fails the check by itself, so the weak form cannot come back by accident. [ADR-007](docs/adr/ADR-007-anchored-receipts.md) has the full reasoning.
 
 ## Architecture Decision Records
 
@@ -216,6 +223,7 @@ Full records in [`docs/adr/`](docs/adr/):
 - [ADR-004: rank fusion, and why the hybrid retriever is off by default](docs/adr/ADR-004-rank-fusion-and-why-hybrid-is-off.md). A measured negative result and the condition for revisiting it.
 - [ADR-005: the reranker ranks documents, and is evaluated out of fold](docs/adr/ADR-005-document-level-reranking-and-out-of-fold-evaluation.md). The objective-mismatch bug and the train/eval discipline.
 - [ADR-006: ranking is a total order, quantised, with an explicit tie break](docs/adr/ADR-006-deterministic-ranking.md). Why `np.argpartition` made this gate give different verdicts on different machines, and what replaced it.
+- [ADR-007: measured numbers are pinned to the sentence that claims them](docs/adr/ADR-007-anchored-receipts.md). How the receipts check reported "every number matches" while three were wrong, and the impact claim it was hiding.
 
 ## Intentionally out of scope
 
@@ -250,8 +258,9 @@ Full records in [`docs/adr/`](docs/adr/):
 
 ## Hardest problem solved
 
-Two, and the second one was caught by this repository's own receipts check after it was
-pushed, which is the best argument for building the check in the first place.
+Three, and the order they arrived in is the point: the receipts check caught the first one
+after it was pushed, and then the first one's fix exposed that the check itself was weaker
+than it claimed to be.
 
 ### The gate gave different verdicts on different machines
 
@@ -291,6 +300,49 @@ Two things are worth saying about this one. The receipts check paid for itself o
 real use, catching a defect that no test on one machine could have found. And the honest
 consequence is that every number in this README moved slightly when it was fixed, because the
 tie ordering changed; the values here are the reproducible ones.
+
+### The check that guards every number was passing without checking anything
+
+With the ranking fixed, `make receipts` printed "every number in the readme matches a value
+this build measured". It was wrong three times over, in the file it had just approved.
+
+The check asked `value in readme_text`. For `0.8762` that is a real assertion. For `11` it is
+not, because any long document contains `11` somewhere, and short strings are exactly what
+counts of things look like. Three defects were sitting inside that blind spot: the sentence
+describing the blame table said 10 queries where the gate lists 11, the Quickstart advertised
+159 tests when the suite had 170, and a config comment plus a module docstring were not read
+at all, so the candidate profile's header still quoted the pre-fix recall that ADR-006 had
+just replaced.
+
+Two changes close it. A metric can pin its value to the phrase that carries it, `"{} queries
+named in the blame table"`, so the check reads the claim instead of scanning the document; and
+a metric whose display string is short enough to be ambiguous and which declares no phrase now
+fails on that basis alone, so the weak form cannot return by accident. The registry also lists
+every file that writes a measured number down, not just the README, because two of the three
+stale numbers were not in the README.
+
+Then the part worth the section. Repairing the check meant re-reading the sentence it had
+failed to check, and the sentence was making a claim the data did not support:
+
+> leaves 10 of 140 labeled questions with no correct document in the top 5. On a support
+> search handling 5,000 queries a day, that ratio works out to roughly 360 searches a day
+> that stop finding their answer
+
+Eleven queries score zero under the candidate, not ten. But the number that belongs in that
+sentence is neither, because 7 queries were already scoring zero on the *baseline*. The
+refactor pushed 5 queries from an answer to nothing and, by accident, gave 1 an answer it did
+not have before. Its true cost is a net 4 queries, 2.9% of the golden set, and about 140
+searches a day. The original sentence charged the change for breakage that predated it and
+overstated the business impact by a factor of two and a half. Nothing in the tolerance, the
+bootstrap, or the receipts check could have caught it: every number was arithmetically
+correct and the reasoning on top of them was not.
+
+So it became a gate feature rather than a copy edit. `GateVerdict` now reports
+`blanked_queries` and `recovered_queries` beside the blame list, both markdown and HTML
+reports print a blast-radius line built from the pair, and `net_blanked` carries a docstring
+explaining why the candidate's total zero count is the wrong number to quote. A retrieval gate
+whose own README overstated a regression by 2.5x had a gap where its most useful output should
+have been.
 
 ### The approximate index looked fine, then it looked broken, and both readings were wrong
 

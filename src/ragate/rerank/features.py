@@ -2,7 +2,7 @@
 
 The unit of ranking is a document, not a chunk, and that is the whole point of this
 module. The first version of this reranker scored chunks, because chunks are what
-retrieval returns, and it made held-out recall@5 worse: 0.9070 down to 0.8450. The
+retrieval returns, and it made held-out recall@5 worse: 0.9070 down to 0.8411. The
 coefficients said why. The strongest positive weight landed on the number of documents a
 chunk belongs to, which is not a relevance signal at all. A chunk shared by thirty
 articles has thirty chances of touching one of the labeled documents, so the label

@@ -1,10 +1,16 @@
 {
-  "generated_at": "2026-08-13T19:36:34+00:00",
+  "generated_at": "2026-08-13T20:05:41+00:00",
   "environment": {
     "python": "3.11.15",
     "platform": "Linux-6.18.5-fc-v20-x86_64-with-glibc2.39"
   },
-  "how_to_use": "Every value here was produced by the command in its source field. tools/check_readme_numbers.py asserts the README still contains each display string, so a stale claim fails CI.",
+  "how_to_use": "Every value here was produced by the command in its source field. tools/check_readme_numbers.py asserts that each value still appears in the documents listed under checked_documents, and that values with an anchor appear inside that exact phrase, so a stale claim fails CI.",
+  "checked_documents": [
+    "README.md",
+    "ragate.yaml",
+    "configs/candidate-fixed-chunking.yaml",
+    "src/ragate/rerank/features.py"
+  ],
   "metrics": {
     "baseline_recall_at_5": {
       "value": 0.9438,
@@ -13,7 +19,8 @@
       ],
       "source": "ragate eval",
       "note": "default pipeline, all 140 golden queries",
-      "reproducible": true
+      "reproducible": true,
+      "anchors": null
     },
     "baseline_ndcg_at_5": {
       "value": 0.934,
@@ -23,7 +30,10 @@
       ],
       "source": "ragate eval",
       "note": "",
-      "reproducible": true
+      "reproducible": true,
+      "anchors": [
+        "nDCG@5 of {}"
+      ]
     },
     "baseline_mrr_at_5": {
       "value": 0.9268,
@@ -32,7 +42,8 @@
       ],
       "source": "ragate eval",
       "note": "",
-      "reproducible": true
+      "reproducible": true,
+      "anchors": null
     },
     "recall_ceiling": {
       "value": 0.9976,
@@ -41,7 +52,8 @@
       ],
       "source": "ragate eval",
       "note": "queries with more labels than k cannot reach 1.0",
-      "reproducible": true
+      "reproducible": true,
+      "anchors": null
     },
     "baseline_recall_train_split": {
       "value": 0.9395,
@@ -50,7 +62,8 @@
       ],
       "source": "ragate eval",
       "note": "97 queries the reranker was fitted on",
-      "reproducible": true
+      "reproducible": true,
+      "anchors": null
     },
     "baseline_recall_eval_split": {
       "value": 0.9535,
@@ -59,7 +72,8 @@
       ],
       "source": "ragate eval",
       "note": "43 held-out queries",
-      "reproducible": true
+      "reproducible": true,
+      "anchors": null
     },
     "index_units": {
       "value": 518,
@@ -68,7 +82,11 @@
       ],
       "source": "ragate eval",
       "note": "chunks after collapsing byte-identical text",
-      "reproducible": true
+      "reproducible": true,
+      "anchors": [
+        "to {} vectors",
+        "chunks down to {}"
+      ]
     },
     "chunks": {
       "value": 1260,
@@ -77,7 +95,11 @@
       ],
       "source": "ragate eval",
       "note": "",
-      "reproducible": true
+      "reproducible": true,
+      "anchors": [
+        "{} chunks to",
+        "{} chunks down to"
+      ]
     },
     "documents": {
       "value": 420,
@@ -86,7 +108,10 @@
       ],
       "source": "ragate eval",
       "note": "",
-      "reproducible": true
+      "reproducible": true,
+      "anchors": [
+        "--docs {}"
+      ]
     },
     "golden_queries": {
       "value": 140,
@@ -95,7 +120,23 @@
       ],
       "source": "ragate eval",
       "note": "",
-      "reproducible": true
+      "reproducible": true,
+      "anchors": [
+        "--queries {}",
+        "of the {} golden queries"
+      ]
+    },
+    "baseline_zero_hit": {
+      "value": 7,
+      "display": [
+        "7"
+      ],
+      "source": "ragate eval",
+      "note": "golden queries with no correct document in the top k on the default pipeline",
+      "reproducible": true,
+      "anchors": [
+        "{} queries were already scoring zero"
+      ]
     },
     "fail_regression_recall": {
       "value": 0.8762,
@@ -104,7 +145,8 @@
       ],
       "source": "ragate -c configs/candidate-fixed-chunking.yaml gate",
       "note": "",
-      "reproducible": true
+      "reproducible": true,
+      "anchors": null
     },
     "fail_regression_delta": {
       "value": -0.0676,
@@ -113,7 +155,8 @@
       ],
       "source": "ragate -c configs/candidate-fixed-chunking.yaml gate",
       "note": "",
-      "reproducible": true
+      "reproducible": true,
+      "anchors": null
     },
     "fail_regression_interval": {
       "value": [
@@ -125,7 +168,8 @@
       ],
       "source": "ragate -c configs/candidate-fixed-chunking.yaml gate",
       "note": "95% paired bootstrap, 5000 resamples",
-      "reproducible": true
+      "reproducible": true,
+      "anchors": null
     },
     "fail_regression_status": {
       "value": "FAIL",
@@ -134,7 +178,10 @@
       ],
       "source": "ragate -c configs/candidate-fixed-chunking.yaml gate",
       "note": "",
-      "reproducible": true
+      "reproducible": true,
+      "anchors": [
+        "status {}, with"
+      ]
     },
     "fail_regression_regressed_queries": {
       "value": 11,
@@ -143,7 +190,72 @@
       ],
       "source": "ragate -c configs/candidate-fixed-chunking.yaml gate",
       "note": "",
-      "reproducible": true
+      "reproducible": true,
+      "anchors": [
+        "{} queries named in the blame table"
+      ]
+    },
+    "fail_regression_blanked_queries": {
+      "value": 5,
+      "display": [
+        "5"
+      ],
+      "source": "ragate -c configs/candidate-fixed-chunking.yaml gate",
+      "note": "questions that had a correct document in the top k and now have none",
+      "reproducible": true,
+      "anchors": [
+        "{} of 140 questions from answered to unanswered",
+        "{} questions that had a correct document in the top 5 now have none"
+      ]
+    },
+    "fail_regression_recovered_queries": {
+      "value": 1,
+      "display": [
+        "1"
+      ],
+      "source": "ragate -c configs/candidate-fixed-chunking.yaml gate",
+      "note": "questions that had nothing correct and now do",
+      "reproducible": true,
+      "anchors": [
+        "{} that had none now finds one"
+      ]
+    },
+    "fail_regression_candidate_zero_hit": {
+      "value": 11,
+      "display": [
+        "11"
+      ],
+      "source": "ragate -c configs/candidate-fixed-chunking.yaml gate",
+      "note": "total zero-scoring queries on the candidate, including ones already broken",
+      "reproducible": true,
+      "anchors": [
+        "{} questions score zero after the refactor"
+      ]
+    },
+    "fail_regression_net_blanked_share": {
+      "value": 0.0286,
+      "display": [
+        "2.9%"
+      ],
+      "source": "ragate -c configs/candidate-fixed-chunking.yaml gate",
+      "note": "net questions left with no correct document, as a share of the golden set",
+      "reproducible": true,
+      "anchors": [
+        "a net {} of the golden set"
+      ]
+    },
+    "fail_regression_delta_points": {
+      "value": 6.8,
+      "display": [
+        "6.8"
+      ],
+      "source": "ragate -c configs/candidate-fixed-chunking.yaml gate",
+      "note": "the same delta expressed in points of recall@5",
+      "reproducible": true,
+      "anchors": [
+        "costs {} points of recall@5",
+        "%20{}pt%20recall"
+      ]
     },
     "warn_borderline_recall": {
       "value": 0.9286,
@@ -152,7 +264,8 @@
       ],
       "source": "ragate -c configs/candidate-borderline.yaml gate",
       "note": "",
-      "reproducible": true
+      "reproducible": true,
+      "anchors": null
     },
     "warn_borderline_delta": {
       "value": -0.0152,
@@ -161,7 +274,8 @@
       ],
       "source": "ragate -c configs/candidate-borderline.yaml gate",
       "note": "",
-      "reproducible": true
+      "reproducible": true,
+      "anchors": null
     },
     "warn_borderline_interval": {
       "value": [
@@ -173,7 +287,8 @@
       ],
       "source": "ragate -c configs/candidate-borderline.yaml gate",
       "note": "95% paired bootstrap, 5000 resamples",
-      "reproducible": true
+      "reproducible": true,
+      "anchors": null
     },
     "warn_borderline_status": {
       "value": "WARN",
@@ -182,7 +297,10 @@
       ],
       "source": "ragate -c configs/candidate-borderline.yaml gate",
       "note": "",
-      "reproducible": true
+      "reproducible": true,
+      "anchors": [
+        "reported as {} with an instruction"
+      ]
     },
     "warn_borderline_regressed_queries": {
       "value": 3,
@@ -191,7 +309,10 @@
       ],
       "source": "ragate -c configs/candidate-borderline.yaml gate",
       "note": "",
-      "reproducible": true
+      "reproducible": true,
+      "anchors": [
+        "{} queries affected. The interval contains zero"
+      ]
     },
     "fail_no_reranker_recall": {
       "value": 0.9133,
@@ -200,7 +321,8 @@
       ],
       "source": "ragate -c configs/candidate-no-reranker.yaml gate",
       "note": "",
-      "reproducible": true
+      "reproducible": true,
+      "anchors": null
     },
     "fail_no_reranker_delta": {
       "value": -0.0305,
@@ -209,7 +331,8 @@
       ],
       "source": "ragate -c configs/candidate-no-reranker.yaml gate",
       "note": "",
-      "reproducible": true
+      "reproducible": true,
+      "anchors": null
     },
     "fail_no_reranker_interval": {
       "value": [
@@ -221,7 +344,8 @@
       ],
       "source": "ragate -c configs/candidate-no-reranker.yaml gate",
       "note": "95% paired bootstrap, 5000 resamples",
-      "reproducible": true
+      "reproducible": true,
+      "anchors": null
     },
     "fail_no_reranker_status": {
       "value": "FAIL",
@@ -230,7 +354,10 @@
       ],
       "source": "ragate -c configs/candidate-no-reranker.yaml gate",
       "note": "",
-      "reproducible": true
+      "reproducible": true,
+      "anchors": [
+        "status {} again"
+      ]
     },
     "fail_no_reranker_regressed_queries": {
       "value": 5,
@@ -239,7 +366,10 @@
       ],
       "source": "ragate -c configs/candidate-no-reranker.yaml gate",
       "note": "",
-      "reproducible": true
+      "reproducible": true,
+      "anchors": [
+        "with {} queries affected"
+      ]
     },
     "reranker_gain_all_queries": {
       "value": 0.0305,
@@ -248,7 +378,8 @@
       ],
       "source": "ragate gate --baseline baselines/baseline-no-rerank.json",
       "note": "",
-      "reproducible": true
+      "reproducible": true,
+      "anchors": null
     },
     "reranker_gain_interval": {
       "value": [
@@ -260,7 +391,8 @@
       ],
       "source": "ragate gate --baseline baselines/baseline-no-rerank.json",
       "note": "",
-      "reproducible": true
+      "reproducible": true,
+      "anchors": null
     },
     "bm25_only_all": {
       "value": 0.9133,
@@ -269,16 +401,18 @@
       ],
       "source": "python tools/tune_retrieval.py",
       "note": "",
-      "reproducible": true
+      "reproducible": true,
+      "anchors": null
     },
     "bm25_only_eval": {
       "value": 0.907,
       "display": [
-        "0.907"
+        "0.9070"
       ],
       "source": "python tools/tune_retrieval.py",
       "note": "",
-      "reproducible": true
+      "reproducible": true,
+      "anchors": null
     },
     "dense_only_all": {
       "value": 0.8636,
@@ -287,7 +421,8 @@
       ],
       "source": "python tools/tune_retrieval.py",
       "note": "",
-      "reproducible": true
+      "reproducible": true,
+      "anchors": null
     },
     "selected_dense_weight": {
       "value": 0.0,
@@ -296,7 +431,10 @@
       ],
       "source": "python tools/tune_retrieval.py",
       "note": "zero means bm25 alone won the sweep",
-      "reproducible": true
+      "reproducible": true,
+      "anchors": [
+        "dense weight of {}"
+      ]
     },
     "reranker_train_in_sample": {
       "value": 0.9395,
@@ -305,7 +443,8 @@
       ],
       "source": "python tools/train_reranker.py",
       "note": "",
-      "reproducible": true
+      "reproducible": true,
+      "anchors": null
     },
     "reranker_train_out_of_fold": {
       "value": 0.9361,
@@ -314,16 +453,20 @@
       ],
       "source": "python tools/train_reranker.py",
       "note": "GroupKFold by query id, 5 folds",
-      "reproducible": true
+      "reproducible": true,
+      "anchors": null
     },
     "reranker_eval_without": {
       "value": 0.907,
       "display": [
-        "0.907"
+        "0.9070"
       ],
       "source": "python tools/train_reranker.py",
       "note": "",
-      "reproducible": true
+      "reproducible": true,
+      "anchors": [
+        "recall@5 {} without it"
+      ]
     },
     "reranker_eval_with": {
       "value": 0.9535,
@@ -332,7 +475,10 @@
       ],
       "source": "python tools/train_reranker.py",
       "note": "",
-      "reproducible": true
+      "reproducible": true,
+      "anchors": [
+        "without it, {} with it"
+      ]
     },
     "reranker_candidate_rows": {
       "value": 4068,
@@ -341,7 +487,10 @@
       ],
       "source": "python tools/train_reranker.py",
       "note": "",
-      "reproducible": true
+      "reproducible": true,
+      "anchors": [
+        "{} candidate documents"
+      ]
     },
     "chunk_reranker_eval": {
       "value": 0.8411,
@@ -350,7 +499,10 @@
       ],
       "source": "python experiments/chunk_level_reranker.py",
       "note": "the rejected chunk-level variant",
-      "reproducible": true
+      "reproducible": true,
+      "anchors": [
+        "down to {}"
+      ]
     },
     "chunk_reranker_eval_delta": {
       "value": -0.0659,
@@ -359,7 +511,8 @@
       ],
       "source": "python experiments/chunk_level_reranker.py",
       "note": "",
-      "reproducible": true
+      "reproducible": true,
+      "anchors": null
     },
     "chunk_reranker_breadth_coefficient": {
       "value": 0.6538,
@@ -368,7 +521,8 @@
       ],
       "source": "python experiments/chunk_level_reranker.py",
       "note": "the sign that gave the flaw away",
-      "reproducible": true
+      "reproducible": true,
+      "anchors": null
     },
     "dedupe_vectors_saved_pct": {
       "value": 58.9,
@@ -377,7 +531,10 @@
       ],
       "source": "python benchmark/bench_dedupe_effect.py",
       "note": "",
-      "reproducible": true
+      "reproducible": true,
+      "anchors": [
+        "removed {} of the vectors"
+      ]
     },
     "parity_with_duplicates_3x": {
       "value": 0.93676,
@@ -386,7 +543,8 @@
       ],
       "source": "python benchmark/bench_dedupe_effect.py",
       "note": "",
-      "reproducible": true
+      "reproducible": true,
+      "anchors": null
     },
     "parity_deduped_3x": {
       "value": 0.99925,
@@ -395,7 +553,8 @@
       ],
       "source": "python benchmark/bench_dedupe_effect.py",
       "note": "",
-      "reproducible": true
+      "reproducible": true,
+      "anchors": null
     },
     "parity_with_duplicates_12x": {
       "value": 0.92844,
@@ -404,7 +563,8 @@
       ],
       "source": "python benchmark/bench_dedupe_effect.py",
       "note": "",
-      "reproducible": true
+      "reproducible": true,
+      "anchors": null
     },
     "parity_deduped_12x": {
       "value": 0.99857,
@@ -413,7 +573,8 @@
       ],
       "source": "python benchmark/bench_dedupe_effect.py",
       "note": "",
-      "reproducible": true
+      "reproducible": true,
+      "anchors": null
     },
     "exact_p95_smallest": {
       "value": 0.241,
@@ -422,7 +583,11 @@
       ],
       "source": "python benchmark/bench_retrieval.py",
       "note": "",
-      "reproducible": true
+      "reproducible": true,
+      "anchors": [
+        "| {} ms |",
+        "p95 rising from {} ms"
+      ]
     },
     "exact_p95_largest": {
       "value": 2.836,
@@ -431,7 +596,11 @@
       ],
       "source": "python benchmark/bench_retrieval.py",
       "note": "",
-      "reproducible": true
+      "reproducible": true,
+      "anchors": [
+        "| {} ms |",
+        "to {} ms at 12,673"
+      ]
     },
     "exact_p99_largest": {
       "value": 3.263,
@@ -440,7 +609,10 @@
       ],
       "source": "python benchmark/bench_retrieval.py",
       "note": "",
-      "reproducible": true
+      "reproducible": true,
+      "anchors": [
+        "| {} ms |"
+      ]
     },
     "largest_index_vectors": {
       "value": 12673,
@@ -449,26 +621,48 @@
       ],
       "source": "python benchmark/bench_retrieval.py",
       "note": "",
-      "reproducible": true
+      "reproducible": true,
+      "anchors": null
+    },
+    "p99_over_p50_largest": {
+      "value": 1.28,
+      "display": [
+        "1.28"
+      ],
+      "source": "python benchmark/bench_retrieval.py",
+      "note": "how much heavier the tail is than the median at the largest index size",
+      "reproducible": true,
+      "anchors": [
+        "p99 is now {}x p50"
+      ]
     },
     "test_count": {
-      "value": 170,
+      "value": 186,
       "display": [
-        "170"
+        "186"
       ],
       "source": "pytest --junitxml",
       "note": "",
-      "reproducible": true
+      "reproducible": true,
+      "anchors": [
+        "badge/tests-{}-",
+        "{} tests, 92% line coverage",
+        "lint, {} tests, and"
+      ]
     },
     "line_coverage_pct": {
-      "value": 92.1,
+      "value": 92.2,
       "display": [
         "92%",
-        "92.1%"
+        "92.2%"
       ],
       "source": "pytest --cov=ragate --cov-report=xml",
       "note": "",
-      "reproducible": true
+      "reproducible": true,
+      "anchors": [
+        "badge/coverage-{}25-",
+        "{} line coverage"
+      ]
     }
   }
 }

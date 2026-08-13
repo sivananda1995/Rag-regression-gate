@@ -2,8 +2,12 @@
 # "simplify the pipeline" change. Everything else is inherited from ragate.yaml, so the
 # diff a reviewer reads is exactly the change being proposed.
 #
-# Outcome on the committed golden set: recall@5 0.9438 to 0.8794, and the 95% paired
-# bootstrap interval [-0.1017, -0.0318] excludes zero. The gate blocks the build.
+# Outcome on the committed golden set: the drop clears the tolerance and the 95% paired
+# bootstrap interval excludes zero, so the gate blocks the build. The figures are not
+# repeated here on purpose. This comment used to quote them, they moved when ADR-006 was
+# fixed, and nothing noticed, because the receipts check only read the README. Numbers now
+# live where they are checked: `make receipts`, docs/metrics.json, and the README section
+# "The four outcomes on real runs".
 extends: ../ragate.yaml
 
 chunking:

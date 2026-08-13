@@ -1,44 +1,50 @@
 # rag-regression-gate
 
-**A CI gate that blocks a pull request when RAG retrieval quality drops on a labeled golden set, using a tolerance plus a paired bootstrap so that noise on a small golden set does not cry wolf.**
+**A CI gate that blocks a pull request when RAG retrieval quality drops, and confirms when a change genuinely improved it, using a tolerance plus a paired bootstrap so noise on a small golden set cannot cry wolf.**
 
 [![ci](https://github.com/USERNAME/rag-regression-gate/actions/workflows/ci.yml/badge.svg)](https://github.com/USERNAME/rag-regression-gate/actions/workflows/ci.yml)
-[![coverage 93%](https://img.shields.io/badge/coverage-93%25-2a78d6)](#tests-and-coverage)
-[![tests 92](https://img.shields.io/badge/tests-92-2a78d6)](#tests-and-coverage)
-[![caught a 6.0 point recall drop](https://img.shields.io/badge/demo-catches%20a%206.0pt%20recall%405%20drop-e34948)](#the-three-outcomes-on-real-runs)
+[![tests 159](https://img.shields.io/badge/tests-159-2a78d6)](#tests-coverage-and-receipts)
+[![coverage 92%](https://img.shields.io/badge/coverage-92%25-2a78d6)](#tests-coverage-and-receipts)
+[![readme numbers machine checked](https://img.shields.io/badge/readme%20numbers-machine%20checked-1baf7a)](#every-number-here-is-checked-by-ci)
+[![catches a 6.4pt recall drop](https://img.shields.io/badge/demo-catches%20a%206.4pt%20recall%405%20drop-e34948)](#the-four-outcomes-on-real-runs)
 [![license MIT](https://img.shields.io/badge/license-MIT-52514e)](LICENSE)
 
 ## What this solves
 
-- **A chunker or embedding change silently breaks retrieval, and nothing fails.** This gate scores a labeled golden set on every pull request and exits non-zero on a real drop: in the included demo it catches a fixed-size chunking change that costs 6.0 points of recall@5 and takes 13 of 140 questions from answered to unanswered.
-- **Threshold-only gates fire on noise, so teams switch them off.** A drop must clear the agreed tolerance *and* a 95% paired bootstrap interval that excludes zero. The included borderline case (a 3.0 point drop, interval `[-0.0629, +0.0007]`) is reported as WARN with the instruction to enlarge the golden set, not as a failed build.
-- **"Recall went down" is not actionable.** Every verdict ships a per-query blame table naming the documents that fell out of the top-k and the ones that took their place, so the fix starts where the loss happened.
+- **A chunker or model change silently breaks retrieval and nothing fails.** This gate scores a labeled golden set on every pull request and exits non-zero on a real drop: in the included demo it catches a fixed-size chunking change that costs 6.4 points of recall@5 and takes 10 of 140 questions from answered to unanswered.
+- **Threshold-only gates fire on noise, so teams switch them off.** A drop must clear the agreed tolerance *and* a 95% paired bootstrap interval that excludes zero. The included borderline case, a drop of -0.0152 with interval `[-0.0386, 0.0024]`, is reported as WARN with an instruction to enlarge the golden set, not as a failed build.
+- **"Recall went up" is an argument until someone measures it.** The same machinery confirms improvements: the reranker in this repository earns +0.0305 recall@5 with interval `[0.0071, 0.0600]`, and that is why it shipped. Two other plausible improvements were measured and thrown away, which is documented below.
 
 ## Executive summary
 
-Retrieval pipelines fail quietly. A model swap, a chunk-size tweak, or a normalisation change moves which documents come back, and there is usually nothing in CI that notices, because the unit tests still pass and the service still returns 200. The failure surfaces later as users not finding answers. In this repository's own demo, one plausible refactor (sentence-window chunking to fixed 240-character slices) drops recall@5 from 0.864 to 0.804 and leaves 13 of 140 labeled questions with no correct document in the top 5. On a support search handling 5,000 queries a day, that ratio works out to roughly 460 searches a day that stop finding their answer; the 5,000 is an assumption, the 9.3% is measured.
+Retrieval pipelines fail quietly. A model swap, a chunk-size tweak, or a normalisation change moves which documents come back, and usually nothing in CI notices, because the unit tests still pass and the service still returns 200. The failure surfaces later as users not finding answers. In this repository's own demo, one plausible refactor, sentence-window chunking replaced by fixed 240-character slices, drops recall@5 from 0.9438 to 0.8794 and leaves 10 of 140 labeled questions with no correct document in the top 5. On a support search handling 5,000 queries a day, that ratio works out to roughly 360 searches a day that stop finding their answer; the 5,000 is an assumption, the 7.1% is measured.
 
-`ragate` is a small command-line tool that turns retrieval quality into a build status. It evaluates a labeled golden set through a configurable pipeline (chunker, embedder, index), records per-query scores, and compares a candidate run against a baseline committed to git. Failing the build needs two independent conditions: the primary metric must fall further than the tolerance the team agreed on, and a paired bootstrap over per-query score differences must put the whole confidence interval below zero. When only the first holds, the gate says so and asks for more golden queries instead of blocking anyone. The pipeline stages are swappable behind narrow interfaces, so the same harness can measure a hosted embedding API, a fine-tuned local model, or an approximate index, and it ships as a composite GitHub Action.
+`ragate` turns retrieval quality into a build status. It scores a labeled golden set through a configurable pipeline (chunker, retriever, reranker), records per-query scores, and compares a candidate run against a baseline committed to git and reviewed in the pull request like any other file. Failing a build needs two independent conditions: the metric must fall further than the tolerance the team agreed on, and a paired bootstrap over per-query differences must place the whole confidence interval below zero. When only the first holds, the gate says so and asks for more golden queries rather than blocking anyone.
 
-On the committed 420-article corpus and 140-query golden set, the baseline pipeline scores recall@5 of 0.8636 against a theoretical ceiling of 0.9976, nDCG@5 of 0.8103, and a full gate run takes about 0.5 seconds, so it costs nothing to put on every pull request. The gate's three outcomes are all reproduced by a script in this repository (`tools/run_demo.sh`), and the screenshots below are that script's output, not mock-ups.
+The default pipeline scores recall@5 of 0.9438 across all 140 golden queries against a theoretical ceiling of 0.9976, with nDCG@5 of 0.9340 and MRR@5 of 0.9268, and a full gate run takes about a quarter of a second. Every tunable in it was fitted on a 97-query train split and every gain is quoted on the 43 held-out queries it was not fitted on. All four gate outcomes are reproduced by `tools/run_demo.sh`, the screenshots below are that script's output, and `make verify` re-measures every number in this document and fails if any of them has moved.
 
-## The three outcomes on real runs
+## The four outcomes on real runs
 
-`tools/run_demo.sh` runs three candidate profiles against the committed baseline. Every number in these images was produced by that run.
+**A regression, blocked. Exit code 1.** Fixed-size chunking: recall@5 0.9438 to 0.8794, delta -0.0644, 95% interval `[-0.1017, -0.0318]`, status FAIL, with 10 queries named in the blame table.
 
-**Regression caught, exit code 1.** A fixed-size chunking change: recall@5 0.8636 to 0.8039, 95% interval `[-0.1050, -0.0174]`.
-
-![Gate report for a confirmed regression, showing the metric drop, the bootstrap interval, and the per-query blame table](docs/screenshots/gate_fail_report.png)
+![Gate report for a confirmed regression, showing the metric drop, the bootstrap interval, and the per-query blame table naming the documents that fell out of the top five](docs/screenshots/gate_fail_report.png)
 
 **The same run as CI sees it**, structured JSON logs and the markdown summary that lands in the job summary:
 
 ![Terminal output of the gate step, showing the JSON verdict log line, the markdown summary, and exit code 1](docs/screenshots/ci_gate_run.png)
 
-**A drop the gate refuses to call a regression, exit code 0.** 3.0 points, interval `[-0.0629, +0.0007]`, verdict WARN with the reason stating that this golden set cannot separate it from run-to-run noise:
+**A drop the gate refuses to call a regression. Exit code 0.** Narrowing the reranker window and tightening the tolerance to 1 point: recall@5 0.9286, delta -0.0152, interval `[-0.0386, 0.0024]`, status WARN, 3 queries affected. The interval contains zero, so 140 queries cannot separate this from run-to-run noise, and the gate says exactly that.
 
-![Gate report for a borderline drop, showing a WARN verdict and an interval that includes zero](docs/screenshots/gate_warn_report.png)
+![Gate report for a borderline drop, showing a WARN verdict and a confidence interval that includes zero](docs/screenshots/gate_warn_report.png)
 
-**An improvement, exit code 0.** Shortening the character n-gram from 4 to 3 absorbs the typos in a quarter of the golden queries: recall@5 0.9121, delta +0.0486, interval `[+0.0231, +0.0776]`. The report lists which queries gained, which is how a retrieval change gets defended in review instead of argued about ([full-size image](docs/screenshots/gate_pass_report.png)).
+**An improvement, confirmed rather than argued.** Run the current pipeline against the pre-reranker baseline and the gate reports +0.0305 with interval `[0.0071, 0.0600]`, which excludes zero. Read the other way, turning the reranker off is itself a regression: recall@5 0.9133, delta -0.0305, interval `[-0.0600, -0.0071]`, status FAIL, 5 queries affected. That is how the reranker earned its place in the default configuration.
+
+```
+$ make prove-reranker
+## Retrieval gate: PASS
+recall_at_k rose 0.0305 and the 95% interval [0.0071, 0.0600] excludes zero,
+so the gain is larger than this golden set's run-to-run noise.
+```
 
 ## Architecture
 
@@ -47,14 +53,15 @@ flowchart LR
   subgraph inputs[Committed inputs]
     A[corpus.jsonl<br/>420 articles]
     B[golden_queries.jsonl<br/>140 labeled queries]
+    S[splits.json<br/>97 train / 43 held out]
     C[ragate.yaml<br/>pipeline profile]
   end
 
   subgraph pipeline[Evaluation pipeline]
     D[chunker<br/>sentence-window or fixed]
     E[collapse identical chunks<br/>1260 chunks to 518 vectors]
-    F[embedder<br/>hashing local or OpenAI]
-    G[index<br/>exact cosine or FAISS HNSW]
+    F[retriever<br/>bm25, dense, or rank fusion]
+    G[reranker<br/>linear model over 11 document features]
     H[metrics<br/>recall, nDCG, MRR, precision at k]
   end
 
@@ -64,11 +71,12 @@ flowchart LR
     K{bootstrap interval<br/>excludes zero?}
     L[FAIL, exit 1]
     M[WARN, exit 0<br/>enlarge the golden set]
-    N[PASS, exit 0]
+    N[PASS, exit 0<br/>gain confirmed if interval is above zero]
   end
 
   A --> D --> E --> F --> G --> H --> I
   B --> H
+  S --> H
   C --> D & F & G
   BASE[(baselines/baseline.json<br/>in git, reviewed in the PR)] --> J
   I --> J
@@ -79,22 +87,47 @@ flowchart LR
   L & M & N --> O[markdown summary + self-contained HTML report<br/>+ per-query blame table]
 ```
 
-Failures are handled at three boundaries, each of which refuses rather than guesses: corpus loading rejects a golden label that points at a missing document, config loading rejects an unknown key or an impossible value, and the gate refuses to compare two reports whose corpus or `k` differ.
+Failures are handled at four boundaries, each refusing rather than guessing: corpus loading rejects a golden label pointing at a missing document, config loading rejects an unknown key or an impossible value, the reranker rejects a model trained on a different feature set, and the gate refuses to compare two reports whose corpus content or `k` differ.
+
+## What the gate told me to throw away
+
+This is the part of the repository I would most want reviewed, because it is the tool doing its job on its own author.
+
+**Rejected: hybrid retrieval.** Fusing BM25 with the dense retriever by reciprocal rank is the standard recommendation, and it did not work here. BM25 alone scores 0.9133 across all queries while the equal-weight fusion scored lower, and a sweep over seven dense weights and four `rrf_k` values, selected on the train split only, landed on a dense weight of 0.0, which is BM25 by another name. Checking per query explained it: the dense retriever, a reproducible hashing embedder rather than a semantic model, beat BM25 on **zero** of the 140 golden queries, scoring 0.8636 overall. Fusion cannot add information that one component does not have. The BM25 implementation, the fusion code, and the sweep all stay in the repository, because the question becomes live again the moment a real embedding model is plugged in, and then the sweep answers it in one command. See `docs/tuning_report.json` and ADR-004.
+
+**Rejected: reranking chunks.** The first reranker scored the chunks that retrieval returns, which seemed obvious, and it destroyed held-out recall: 0.9070 down to 0.8411, a loss of 0.0659, while looking fine in training. The coefficients gave it away. The largest positive weight, +0.6553, sat on the number of documents a chunk belongs to. That is not a relevance signal. A chunk shared by thirty articles has thirty chances of touching one of the labeled documents, so a chunk-level label rewards promoting boilerplate, while recall@5 counts distinct documents and is unimpressed. The rejected variant is preserved as a runnable experiment (`python experiments/chunk_level_reranker.py`) so this paragraph can be checked instead of believed.
+
+**Kept: reranking documents.** Aggregating the evidence from every retrieved chunk up to the document, labeling documents, and ranking documents put the model and the metric back on the same objective. Trained on 4066 candidate documents from the 97 train queries, it scores 0.9395 in sample and 0.9395 out of fold, and on the 43 held-out queries it moves recall@5 from 0.9070 to 0.9535. The in-sample and out-of-fold numbers being identical is the useful signal: with eleven features and a linear model there is nothing to memorise.
+
+## Method: what may look at which queries
+
+A retrieval harness that fits anything on the queries it reports on will publish numbers that are too good and mean nothing. The discipline here is mechanical:
+
+| Artifact | Fitted on | Reported on |
+| --- | --- | --- |
+| Fusion weights and `rrf_k` (`tools/tune_retrieval.py`) | train split, 97 queries | eval split, and the gap between the two is stated |
+| Reranker coefficients (`tools/train_reranker.py`) | train split only, with GroupKFold grouped by query id | out of fold within train, then the held-out eval split |
+| Any claim of a gain in this README | nothing | eval split, 43 queries nothing was fitted on |
+| The gate's own verdicts | not applicable | all 140 queries, because a verdict is a difference between two runs on the same set, where a constant bias cancels |
+
+That last row matters and is easy to get wrong in the other direction. Leakage inflates an absolute score, but the gate compares two runs over identical queries, so an inflated absolute level affects both sides equally and cancels out of the difference. The number that must be leak-free is the *claimed gain*, and those are quoted on the eval split throughout. The split lives in `data/splits.json`, is stratified by task family, and is generated once by `tools/make_splits.py` so a later edit to that script cannot move the boundary under a published number.
 
 ## Tech stack
 
 | Technology | Role in this project | Why chosen here |
 | --- | --- | --- |
-| Python 3.10+ | The whole tool | The gate has to run as a step in someone else's CI with one `pip install`, which rules out a heavier runtime |
-| numpy | Vector math, exact search, bootstrap resampling | 5,000 bootstrap resamples are one fancy-indexing operation on a 5,000 x 140 matrix; a Python loop would be seconds instead of milliseconds |
-| Custom hashing embedder (blake2b) | Default embedding provider | Reproducible to the bit with no network and no model download, so a baseline recorded today is comparable tomorrow. Python's built-in `hash()` is salted per process and would break that |
-| FAISS (HNSW, optional) | Second index backend | Lets the ANN penalty be measured deliberately (see ADR-001) instead of silently absorbed into the gate's noise floor |
-| PyYAML | Config profiles | Candidate pipelines are committed as reviewable files, so a PR shows what changed about the pipeline, not just the code |
-| pytest, pytest-cov | 92 tests, 93% line coverage | Metric implementations are asserted against hand computation, so a refactor cannot quietly redefine recall |
-| ruff | Lint and import order | One tool, fast enough to run on every commit |
-| Playwright + Chromium | Screenshot capture in `tools/capture_screenshots.py` | The README's images are rendered from the tool's real HTML output, so documentation cannot drift from behaviour |
-| matplotlib | Benchmark charts | Charts are generated from `benchmark/results/*.json`, never hand-drawn |
-| GitHub Actions (composite action) | Distribution | `action.yml` makes adoption five lines in another repository, which is the difference between a demo and a tool |
+| Python 3.10+ | The whole tool | The gate runs as a step in someone else's CI after one `pip install`, which rules out a heavier runtime |
+| numpy | Vector math, exact search, bootstrap resampling | 5,000 bootstrap resamples are one fancy-indexing operation on a 5,000 by 140 matrix; a Python loop would take seconds instead of milliseconds |
+| BM25 Okapi, implemented here | Default retriever | Written from the published formula and asserted against arithmetic computed outside the implementation, because a repository whose claim is traceability should not have an opaque scorer at its core |
+| Custom hashing embedder (blake2b) | Dense retriever's embedding provider | Reproducible to the bit with no network and no model download, so a baseline recorded today is comparable tomorrow. Python's built-in `hash()` is salted per process and would break that |
+| FAISS HNSW (optional) | Second index backend | Lets the approximate-search penalty be measured deliberately rather than absorbed into the gate's noise floor (ADR-001) |
+| scikit-learn (dev only) | Trains the reranker | Training is a developer task; inference is 20 lines of numpy, so adopting the gate does not drag scikit-learn into a CI image |
+| PyYAML with an `extends` key | Config profiles | A candidate pipeline is the lines that differ from `ragate.yaml`, so the pull request diff is the change itself rather than a forty-line copy that drifts |
+| pytest, pytest-cov | 159 tests, 92% line coverage | Metrics and BM25 are asserted against hand computation, so a refactor cannot quietly redefine recall |
+| ruff | Lint and import order | One fast tool, runs on every commit |
+| Playwright with Chromium | Screenshots and the demo video, in `tools/` | Every image in this README is rendered from the tool's real output, so the documentation cannot drift from the behaviour |
+| matplotlib | Benchmark charts | Generated from `benchmark/results/*.json`, never drawn by hand |
+| GitHub Actions composite action | Distribution | `action.yml` makes adoption five lines in another repository, which is the difference between a demo and a tool |
 
 ## Quickstart
 
@@ -104,32 +137,20 @@ Prerequisites: Python 3.10 or newer, `git`, and about 200 MB of disk for the opt
 git clone https://github.com/USERNAME/rag-regression-gate.git
 cd rag-regression-gate
 python -m venv .venv && source .venv/bin/activate    # Windows: .venv\Scripts\activate
-pip install -e ".[dev,faiss]"
+pip install -e ".[dev,faiss,train]"
 
-# 1. Confirm the committed corpus and golden set load, and score them
-ragate eval -o reports/candidate.json
-
-# 2. Compare against the committed baseline (exit code 0)
-ragate gate
-
-# 3. Reproduce the three demo verdicts, including the exit-1 regression
-bash tools/run_demo.sh
-
-# 4. Run the test suite with coverage
-pytest --cov=ragate --cov-report=term -q
-
-# 5. Regenerate the benchmarks and their charts (about 90 seconds)
-python benchmark/bench_retrieval.py
-python benchmark/bench_dedupe_effect.py
-python benchmark/plot_results.py
+ragate eval -o reports/candidate.json   # score the golden set
+ragate gate                             # compare against the committed baseline, exit 0
+make demo                               # reproduce all four gate outcomes, one exits 1
+make verify                             # lint, 159 tests, and re-measure every readme number
 ```
 
-Regenerating the corpus is optional and deterministic: `python data/generate_corpus.py --docs 420 --queries 140 --seed 20260812` reproduces the committed files byte for byte.
+`make help` lists every target. The corpus regenerates deterministically (`python data/generate_corpus.py --docs 420 --queries 140 --seed 20260812` reproduces the committed files byte for byte), and so do the split, the reranker, the benchmarks, and the charts.
 
 To use it on your own pipeline, point the profile at your data, record a baseline on a commit you trust, and commit it:
 
 ```bash
-ragate -c my-profile.yaml baseline   # writes baselines/baseline.json
+ragate -c my-profile.yaml baseline    # writes baselines/baseline.json
 git add baselines/baseline.json && git commit -m "chore(baseline): record retrieval baseline"
 ```
 
@@ -145,81 +166,97 @@ In another repository, as a step:
 
 ## Performance under load
 
-Method: `benchmark/bench_retrieval.py` times single-query searches, one query at a time rather than batched, because that is what a caller experiences and what the gate itself does. 140 golden queries x 3 passes per data point, k = 20 chunks retrieved, 512-dimension vectors, exact and HNSW backends over the same vectors. Hardware: 2 vCPU, 7 GB RAM container, Python 3.11.15. The corpus is padded with tenant-variant articles to reach each size; every quality number elsewhere in this README comes from the unpadded labeled corpus.
+Method: `benchmark/bench_retrieval.py` times single-query searches one at a time rather than batched, because that is what a caller experiences and what the gate itself does. 140 golden queries times 3 passes per data point, k = 20 chunks retrieved, 512-dimension vectors, exact and HNSW backends over identical vectors. Hardware: 2 vCPU, 7 GB RAM container, Python 3.11.15. Corpora larger than the labeled one are padded with tenant-variant articles for size only; every quality number in this README comes from the unpadded labeled corpus.
 
 ![Single-query retrieval latency versus index size, p50, p95 and p99 for exact search with HNSW p95 for comparison](docs/screenshots/latency_scaling.png)
 
-| corpus | documents | chunks | vectors indexed | exact p50 | exact p95 | exact p99 | HNSW p95 | HNSW score parity | index MB |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1x | 420 | 1260 | 518 | 0.081 ms | 0.152 ms | 0.204 ms | 0.120 ms | 1.00000 | 1.1 |
-| 3x | 1260 | 4173 | 1601 | 0.121 ms | 0.201 ms | 0.273 ms | 0.147 ms | 0.99928 | 3.3 |
-| 6x | 2520 | 8380 | 3167 | 0.204 ms | 0.287 ms | 0.334 ms | 0.236 ms | 0.99713 | 6.5 |
-| 12x | 5040 | 17326 | 6364 | 0.435 ms | 0.569 ms | 0.748 ms | 0.231 ms | 0.99786 | 13.0 |
-| 24x | 10080 | 34489 | 12673 | 1.110 ms | 1.390 ms | 4.434 ms | 0.335 ms | 0.99642 | 26.0 |
+| corpus | documents | chunks | vectors indexed | exact p50 | exact p95 | exact p99 | HNSW p95 | HNSW score parity |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 1x | 420 | 1260 | 518 | 0.081 ms | 0.152 ms | 0.204 ms | 0.120 ms | 1.00000 |
+| 3x | 1260 | 4173 | 1601 | 0.121 ms | 0.201 ms | 0.273 ms | 0.147 ms | 0.99928 |
+| 6x | 2520 | 8380 | 3167 | 0.204 ms | 0.287 ms | 0.334 ms | 0.236 ms | 0.99713 |
+| 12x | 5040 | 17326 | 6364 | 0.435 ms | 0.569 ms | 0.748 ms | 0.231 ms | 0.99786 |
+| 24x | 10080 | 34489 | 12,673 | 1.110 ms | 1.39 ms | 4.434 ms | 0.335 ms | 0.99642 |
 
-Where it degrades, honestly: exact search is O(n) per query and the table shows it, with p95 rising 9x between 518 and 12,673 vectors. The knee is at p99, not p50: at 24x the p99 of 4.43 ms is 4x the p50, because a 26 MB score matrix no longer fits comfortably in cache and the tail pays for memory traffic. HNSW is flat by comparison (0.12 ms to 0.34 ms across a 24x range) and gives up 0.4% of similarity mass at the largest size. For a golden set this is a non-issue, since a whole 140-query gate run costs about half a second; past roughly 10^6 vectors the gate should switch backends, and ADR-001 states the trigger.
+Where it degrades, honestly: exact search is O(n) per query and the table shows it, with p95 rising from 0.152 ms at 518 vectors to 1.39 ms at 12,673. The knee is at the tail rather than the median: at 24x the p99 of 4.434 ms is four times the p50, because a 26 MB score matrix stops fitting comfortably in cache and the tail pays for memory traffic. HNSW stays nearly flat across the same range and gives up 0.4% of similarity mass at the largest size. For a golden set none of this bites, since a full 140-query gate run costs about a quarter of a second; past roughly 10^6 vectors the gate should switch backends, and ADR-001 states the trigger.
 
-"Score parity" is the honest way to measure an approximate index: the true cosine similarity of what HNSW returned, divided by the true cosine similarity of the exact top-k. Top-k set overlap alone punishes an index for swapping two documents of equal similarity, and it was the misleading measure that nearly produced a wrong conclusion in this repository (see the war story).
+"Score parity" is the honest way to measure an approximate index: the true cosine similarity of what HNSW returned, divided by the true cosine similarity of the exact top-k. Top-k set overlap alone punishes an index for swapping two documents of equal similarity, and it was the misleading measure that nearly produced a wrong conclusion here, described below.
 
-## Tests and coverage
+## Tests, coverage, and receipts
 
-92 tests, 93% line coverage, measured with `pytest --cov=ragate --cov-report=term`. The coverage floor is enforced in CI at 90% by parsing `coverage.xml`, so the badge cannot rot. The uncovered remainder is dominated by `embedders/openai_provider.py`, which cannot be exercised in an environment with no outbound network access; its error paths are tested, its request path is not, and nothing in this README claims otherwise.
+159 tests, 92% line coverage, measured with `pytest --cov=ragate`. CI enforces a 90% floor by parsing `coverage.xml`, so the badge cannot rot. The uncovered remainder is dominated by two adapters that cannot be exercised where this was built: the OpenAI embedding provider and the Anthropic reranker both need network access the build environment does not have. Their error paths and pure logic are tested, their request paths are not, and no number in this README comes from either.
+
+### Every number here is checked by CI
+
+A README quotes a measurement, the code changes, the number stays, and a year later the document is confidently wrong. So the numbers in this file are not maintained by hand:
+
+```bash
+make receipts     # or: python tools/collect_metrics.py && python tools/check_readme_numbers.py
+```
+
+`tools/collect_metrics.py` re-runs the pipeline, the gate scenarios, the tuning sweep, the reranker training, the rejected experiment, both benchmarks, and the test suite, then writes every resulting value to `docs/metrics.json` with the exact command that produced it. `tools/check_readme_numbers.py` asserts this README still contains each current value and fails with a list of stale ones. Both run in CI, so a number that moves breaks the build exactly like a failing test.
 
 ## Architecture Decision Records
 
 Full records in [`docs/adr/`](docs/adr/):
 
-- [ADR-001: Exact search is the default index for evaluation, with HNSW available](docs/adr/ADR-001-exact-search-for-evaluation.md). The gate measures the pipeline, so the index must not contribute its own error.
-- [ADR-002: The baseline is a JSON file in git, not a row in a tracking server](docs/adr/ADR-002-git-committed-baseline.md). The boring choice, taken against MLflow on purpose: a reference that changes without a commit produces builds that fail with no diff to point at.
-- [ADR-003: A drop must clear both a tolerance and a paired bootstrap interval](docs/adr/ADR-003-paired-bootstrap-over-fixed-threshold.md). Why a paired bootstrap rather than a t-test, and why the gate is allowed to answer "I cannot tell".
+- [ADR-001: exact search is the default index for evaluation, with HNSW available](docs/adr/ADR-001-exact-search-for-evaluation.md). The gate measures the pipeline, so the index must not contribute its own error.
+- [ADR-002: the baseline is a JSON file in git, not a row in a tracking server](docs/adr/ADR-002-git-committed-baseline.md). The boring choice, taken against MLflow on purpose.
+- [ADR-003: a drop must clear both a tolerance and a paired bootstrap interval](docs/adr/ADR-003-paired-bootstrap-over-fixed-threshold.md). Why a paired bootstrap rather than a t-test, and why the gate may answer "I cannot tell".
+- [ADR-004: rank fusion, and why the hybrid retriever is off by default](docs/adr/ADR-004-rank-fusion-and-why-hybrid-is-off.md). A measured negative result and the condition for revisiting it.
+- [ADR-005: the reranker ranks documents, and is evaluated out of fold](docs/adr/ADR-005-document-level-reranking-and-out-of-fold-evaluation.md). The objective-mismatch bug and the train/eval discipline.
 
 ## Intentionally out of scope
 
-- **Generation quality.** This gate stops at retrieval: which documents come back, in what order. Answer faithfulness and groundedness need a different harness with a different labeling cost, and conflating the two produces a metric nobody can act on. Trigger to add it: once retrieval is fenced by this gate and regressions still reach users, the next measurement is generation.
-- **Recording history and trends.** There is no dashboard of recall over time; `git log baselines/baseline.json` is the trend view. Trigger: more than one evaluation profile per repository, or a need to compare more than about 20 historical runs (ADR-002).
-- **Reranker evaluation.** The pipeline is chunk, embed, search. A cross-encoder reranking stage is a natural fourth step and the `Embedder`/`VectorIndex` protocols leave room for it. Trigger: a reranker enters the production path, at which point the gate must measure the pipeline that actually serves traffic.
-- **Parallel evaluation.** Everything runs on one thread. Embedding 518 texts takes about 300 ms, so concurrency would add complexity for no measurable win, and a `workers` knob that did nothing was removed during the forensics audit rather than left in the config as decoration. Trigger: a golden-set run past 30 seconds, which for a hosted embedding API arrives at roughly 2,000 queries.
+- **Generation quality.** This gate stops at retrieval: which documents come back, in what order. Answer faithfulness needs a different harness and a different labeling cost, and conflating the two produces a metric nobody can act on. Trigger to add it: retrieval is fenced by this gate and regressions still reach users.
+- **A semantic embedding model.** The dense retriever is a reproducible hashing embedder, and the honest reading of the numbers is that it contributes nothing next to BM25 on this corpus. A real embedding model belongs behind the existing `Embedder` protocol and would make hybrid retrieval worth re-testing; the sweep that answers that question is already written.
+- **Trend history and dashboards.** `git log baselines/baseline.json` is the trend view. Trigger: more than one evaluation profile per repository, or comparing more than about 20 historical runs (ADR-002).
+- **A cross-encoder or LLM reranker.** The interface is in the repository (`src/ragate/rerank/llm.py`, with batching, a strict output contract, bounded retries, and a token counter) but it has never been executed, so it ships switched off and unclaimed. Trigger: a reranking budget in the tens of milliseconds per query and a key in CI.
+- **Per-slice verdicts.** The golden set already tags each query with a scope and a task family, and an aggregate hides a change that helps one class while breaking another. This is the next thing I would build.
 
 ## Security and compliance
 
-- **Secrets.** No credential is ever read from a config file. The only secret this tool can use is `OPENAI_API_KEY` from the environment, read once at provider construction. In CI it comes from an Actions secret; the production path is a cloud secret manager or Vault, injected as an environment variable at process start.
-- **What is never logged.** Log records carry metric values, counts, timings, and identifiers. Query text and document text are never logged, because a golden set built from real user questions contains whatever users typed, which in a support corpus routinely includes names, account numbers, and internal hostnames. Query text appears only in the HTML and markdown reports, which are build artifacts under the same access control as the repository.
-- **Least privilege in CI.** The workflow declares `permissions: contents: read`. The gate needs no write access to anything: it reads the repository, writes files into the workspace, and communicates its verdict through an exit code.
-- **Supply chain.** Runtime dependencies are numpy and PyYAML. FAISS and the OpenAI SDK are optional extras, so a consumer that does not need them does not install them. Pinning is left to the consumer's lockfile rather than pinned here, which is the correct choice for a library-shaped tool and the wrong one for an application.
-- **Data in the repository.** The committed corpus is synthetic, generated by `data/generate_corpus.py` from a seeded template grammar. No customer text, no scraped content, and no licence question.
+- **Secrets.** No credential is read from a config file. The two optional providers read `OPENAI_API_KEY` and `ANTHROPIC_API_KEY` from the environment at construction time. In CI those come from Actions secrets; the production path is a cloud secret manager or Vault injected at process start.
+- **What is never logged.** Log records carry metric values, counts, timings, and identifiers. Query and document text are never logged, because a golden set built from real user questions contains whatever users typed, which in a support corpus routinely includes names, account numbers, and internal hostnames. Query text appears only in the HTML and markdown reports, which are build artifacts under the same access control as the repository.
+- **The model artifact is reviewable and inert.** `models/reranker.json` holds coefficients as JSON rather than a pickle, so loading it cannot execute code and changing it shows up as a readable diff.
+- **Least privilege in CI.** The workflow declares `permissions: contents: read`. The gate needs write access to nothing: it reads the repository, writes files into the workspace, and communicates through an exit code.
+- **Supply chain.** Runtime dependencies are numpy and PyYAML. FAISS, scikit-learn, and the LLM SDK are optional extras, so a consumer that does not need them does not install them.
+- **Data.** The committed corpus is synthetic, generated from a seeded template grammar. No customer text, no scraped content, no licence question.
 
 ## Failure modes
 
 | Failure | Detection | Behaviour | Recovery |
 | --- | --- | --- | --- |
-| Baseline file missing (fresh repository, or someone deleted it) | `load_baseline` checks for the path before doing any work | Exit code 3 with a message naming the command that creates one | Run `ragate baseline` on a commit whose quality is trusted, and commit the file |
-| Corpus or golden set changed, so the baseline is no longer comparable | Every report carries a fingerprint: sha256 of the corpus file, sha256 of the golden-set file, and `k`. The gate compares fingerprints before comparing metrics and names the field that differs | Exit code 3, refuses to produce a verdict, rather than reporting a fake regression | Re-record the baseline; the PR diff shows the new reference. Verified by editing one line of the corpus in place, which produces exit 3 naming `corpus_sha256` |
-| A golden label points at a document that no longer exists | Query loading validates every label against the loaded corpus | Exit code 2 naming the query and the missing document ids | Fix the label or restore the document. Left as a warning it would depress recall permanently and silently |
-| Embedding provider is down or rate-limiting | Provider adapter retries five times with exponential backoff starting at 0.5 s, logging each attempt | Raises `EmbedderError` after the last attempt, exit code 2, no verdict written | CI retries the job; a persistent outage is an infrastructure incident, and the gate correctly declines to guess a verdict |
-| No `OPENAI_API_KEY` while the profile asks for the hosted provider | Checked at construction, before any work | Exit code 2 with the environment variable named and the local alternative suggested | Set the secret, or run with `RAGATE_EMBEDDER_PROVIDER=hashing` |
-| Malformed corpus or golden-set line | JSONL reader reports the file and line number | Exit code 2 | Fix the named line; the parser never skips bad records, because a silently dropped query changes the metric |
-| Corpus so large that the gate is slow | Stage timings are in every report and every log line | No automatic behaviour; the numbers make it visible | Switch to `index.backend=faiss` after measuring the parity cost (ADR-001) |
-| Duplicate `doc_id` in the corpus | Rejected at load | Exit code 2 | Deduplicate the corpus. Two documents with one id would make the blame table ambiguous |
-| Flaky verdicts across re-runs | Not possible by construction: the bootstrap seed is fixed and neither backend has an unseeded random component | Same inputs always produce the same verdict | If a verdict does change, the inputs changed, and the fingerprint plus per-query scores show where |
+| Baseline missing | `load_baseline` checks the path before any work | Exit 3 naming the command that creates one | `ragate baseline` on a trusted commit, then commit the file |
+| Corpus or golden set edited without re-recording | Each report carries sha256 of the corpus, sha256 of the golden set, and `k`; the gate compares fingerprints first | Exit 3 naming the field that differs, rather than reporting a fake regression | Re-record; the diff shows the new reference. Verified by editing one corpus line in place, which exits 3 naming `corpus_sha256` |
+| Reranker model missing or trained on different features | Validated at load against the current feature names | Exit 2 naming `tools/train_reranker.py` | Retrain, or set `rerank.enabled=false` |
+| A golden label points at a deleted document | Query loading validates every label against the corpus | Exit 2 naming the query and the missing ids | Fix the label or restore the document. As a warning it would depress recall permanently and silently |
+| Embedding or reranking provider down or rate-limiting | Adapters retry with exponential backoff, logging each attempt | The LLM reranker falls back to retrieval order, because a reranker outage should degrade quality rather than break the gate. The embedder raises, because without vectors there is no verdict to give | CI retries; a persistent outage is an infrastructure incident and the gate correctly declines to guess |
+| Malformed corpus or golden-set line | JSONL reader reports file and line number | Exit 2 | Fix the named line. The parser never skips a bad record, because a silently dropped query changes the metric |
+| Duplicate `doc_id` in the corpus | Rejected at load | Exit 2 | Deduplicate. Two documents sharing an id make the blame table ambiguous |
+| Corpus outgrows exact search | Stage timings appear in every report and log line | No automatic behaviour; the numbers make it visible | Switch to `index.backend=faiss` after measuring the parity cost (ADR-001) |
+| Flaky verdicts across re-runs | Not possible by construction: the bootstrap seed is fixed, ties break on index, and no component has an unseeded random source | Identical inputs always produce an identical verdict | If a verdict changes, the inputs changed, and the fingerprint plus per-query scores show where |
 
 ## Hardest problem solved
 
-The approximate index looked fine, and then it looked broken, and both readings were wrong.
+The approximate index looked fine, then it looked broken, and both readings were wrong.
 
-Having built the scaling benchmark, I compared HNSW against exact search by the obvious measure: how much of the top-k document set the two backends agree on. At the base corpus size agreement was 0.97, which is what the literature would predict. Padding the corpus to 3x dropped it to 0.57 and 12x to 0.54. Read at face value, that says HNSW is unusable at any real scale, which contradicts the entire industry, so the measurement was more likely wrong than the index.
+Comparing HNSW against exact search by the obvious measure, how much of the top-k document set the two agree on, gave 0.97 at the base corpus size, which is what the literature predicts. Padding the corpus to three times its size dropped agreement to 0.57, and twelve times to 0.54. Read at face value that says HNSW is unusable at any real scale, which contradicts most of the industry, so the measurement was likelier wrong than the index.
 
-My first hypothesis was ties. If many chunks score almost identically, set overlap punishes an index for returning an equally good document in a different order, so I checked the score spread across the top 20 and computed a tie-insensitive measure: the true cosine similarity of what HNSW returned, divided by the exact optimum. That refuted the hypothesis rather than confirming it. Parity was 0.82 with a worst case of 0.10, and the worst query's six HNSW results all shared an identical similarity of 0.1132 while exact search was returning 0.24. This was not a tie-ordering artifact; the search was genuinely landing somewhere bad. Second hypothesis: the metric. HNSW navigates by greedy descent over a proximity graph, which assumes a true metric, and I had built the index with `METRIC_INNER_PRODUCT`. That reasoning is correct and the fix is free, since for unit-length vectors ascending squared L2 is exactly descending cosine, so I made the change. Then I measured it in isolation, and it moved parity from 0.808 to 0.814, which is inside run-to-run variation. The comment in `indexes/faiss_index.py` says so, because a code comment claiming a win that the numbers do not support is worse than no comment.
+First hypothesis: ties. If many chunks score almost identically, set overlap punishes an index for returning an equally good document in a different order. So I checked the score spread across the top 20 and built a tie-insensitive measure, retrieved-score parity: the true cosine similarity of what HNSW returned divided by the exact optimum. It refuted the hypothesis rather than confirming it. Parity was 0.93951 at 3x with a worst case of 0.23, and on the worst query all six HNSW results shared an identical similarity of 0.1132 while exact search was returning 0.24. That is not tie ordering, that is a search landing somewhere bad.
 
-The actual cause was visible only after counting: 2,422 of the 3,780 chunks in the padded index were byte-identical to another chunk. The corpus is templated, as real knowledge bases are, so whole passages repeat across articles, and my padding function made it worse by prefixing only the title, leaving every subsequent chunk identical across tenants. Duplicate points wreck an HNSW graph, because neighbour selection cannot build a useful neighbourhood out of vectors at zero distance from each other, and greedy search gets trapped among the copies. The fix was to stop indexing the same text more than once: group chunks by exact text, index each text once, and carry the list of documents that text belongs to, expanding hits back to documents at scoring time. On the labeled corpus that took the index from 1,260 vectors to 518 (58.9% fewer), cut a full evaluation from 707 ms to 343 ms, moved recall@5 from 0.8621 to 0.8636, and restored parity to 0.99999. At 12x it moved parity from 0.9096 to 0.99872.
+Second hypothesis, technically right and practically irrelevant: I had built the index with `METRIC_INNER_PRODUCT`. HNSW navigates by greedy descent over a proximity graph and that descent assumes a true metric, which inner product is not. For unit-length vectors squared L2 is order-equivalent to cosine, so the correct metric is free and I switched to it. Then I measured the switch in isolation and it moved parity by less than a point, inside run-to-run variation. I kept the change because it is correct by construction, and the comment in `indexes/faiss_index.py` says it was not a measured win, because a comment claiming a win the numbers do not support is worse than no comment.
 
-Two things stayed in the repository as a result. The parity measure is now a first-class benchmark output, because it is what exposed the problem and set-overlap alone would have hidden it. And `benchmark/bench_dedupe_effect.py` regenerates the whole comparison on demand ([results](benchmark/results/dedupe_effect.md), [chart](docs/screenshots/dedupe_effect.png)), so the claim is reproducible rather than remembered. Fix commit: `fix(corpus): index identical chunk text once, mapped to all its documents`.
+The actual cause turned up by counting: 2,422 of the 3,780 chunks in the padded index were byte-identical to another chunk. The corpus is templated, as real knowledge bases are, so whole passages repeat across articles, and my padding function made it worse by prefixing only the title, leaving every later chunk identical across tenants. Duplicate points wreck an HNSW graph, because neighbour selection cannot build a useful neighbourhood from vectors at zero distance from each other, and greedy search gets trapped among the copies. The fix was to stop indexing the same text twice: group chunks by exact text, index each text once, and carry every document id that text belongs to, expanding hits back to documents at scoring time. On the labeled corpus that removed 58.9% of the vectors, 1260 chunks down to 518, cut a full evaluation roughly in half, and restored parity from 0.93951 to 0.99925 at 3x and from 0.9096 to 0.99872 at 12x.
+
+Two things stayed behind. Parity is now a first-class benchmark output, because set overlap alone would have hidden the problem. And `benchmark/bench_dedupe_effect.py` regenerates the whole comparison on demand ([results](benchmark/results/dedupe_effect.md)), so the claim is reproducible rather than remembered. Fix commit: `fix(corpus): index identical chunk text once, mapped to all its documents`.
 
 ![Effect of collapsing identical chunks, showing vectors indexed and retrieval quality lost with and without deduplication at three corpus sizes](docs/screenshots/dedupe_effect.png)
 
 ## Future work
 
-- **A reranking stage behind the existing protocols**, evaluated the same way, so the gate measures the pipeline that actually serves traffic rather than its first two thirds.
-- **Per-slice verdicts.** The golden set already tags each query with a scope (`platform` or `product`) and a task key. Reporting the metric per slice would catch a change that helps one query class while quietly breaking another, which an aggregate hides by design.
-- **Golden-set health checks.** The gate can already say "this golden set cannot separate that drop from noise". The next step is to compute, from the current per-query variance, how many queries would be needed for the team's chosen tolerance to be detectable, and print that number.
-- **Before real production use**: replace the synthetic corpus with a labeled sample of real traffic (a few hundred queries, labeled by the people who answer them), pin dependency versions in the consuming repository, and set the tolerance from two weeks of observed run-to-run variation rather than picking 2 points because it sounds reasonable.
-- **First metric to watch after adoption**: the WARN rate. A gate that is mostly WARN is a gate whose golden set is too small to protect anything, and that is a measurable, fixable condition rather than an opinion.
+- **Per-slice verdicts**, using the scope and task tags already on every golden query, so a change that trades one query class for another cannot hide inside an aggregate.
+- **Golden-set power checks.** The gate can already say "this set cannot separate that drop from noise". The next step is to compute, from the observed per-query variance, how many queries the team's chosen tolerance would need, and print that number.
+- **A real embedding model behind the existing protocol**, which would make hybrid retrieval worth re-testing; the sweep that decides it is already written and takes one command.
+- **Before real production use**: replace the synthetic corpus with a few hundred real queries labeled by the people who answer them, pin dependency versions in the consuming repository, and set the tolerance from two weeks of observed run-to-run variation rather than picking 2 points because it sounds reasonable.
+- **First metric to watch after adoption**: the WARN rate. A gate that is mostly WARN is protecting nothing, and that is a measurable, fixable condition rather than an opinion.

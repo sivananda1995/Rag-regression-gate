@@ -1,0 +1,474 @@
+{
+  "generated_at": "2026-08-13T15:08:37+00:00",
+  "environment": {
+    "python": "3.11.15",
+    "platform": "Linux-6.18.5-fc-v20-x86_64-with-glibc2.39"
+  },
+  "how_to_use": "Every value here was produced by the command in its source field. tools/check_readme_numbers.py asserts the README still contains each display string, so a stale claim fails CI.",
+  "metrics": {
+    "baseline_recall_at_5": {
+      "value": 0.9438,
+      "display": [
+        "0.9438"
+      ],
+      "source": "ragate eval",
+      "note": "default pipeline, all 140 golden queries",
+      "reproducible": true
+    },
+    "baseline_ndcg_at_5": {
+      "value": 0.934,
+      "display": [
+        "0.9340",
+        "0.934"
+      ],
+      "source": "ragate eval",
+      "note": "",
+      "reproducible": true
+    },
+    "baseline_mrr_at_5": {
+      "value": 0.9268,
+      "display": [
+        "0.9268"
+      ],
+      "source": "ragate eval",
+      "note": "",
+      "reproducible": true
+    },
+    "recall_ceiling": {
+      "value": 0.9976,
+      "display": [
+        "0.9976"
+      ],
+      "source": "ragate eval",
+      "note": "queries with more labels than k cannot reach 1.0",
+      "reproducible": true
+    },
+    "baseline_recall_train_split": {
+      "value": 0.9395,
+      "display": [
+        "0.9395"
+      ],
+      "source": "ragate eval",
+      "note": "97 queries the reranker was fitted on",
+      "reproducible": true
+    },
+    "baseline_recall_eval_split": {
+      "value": 0.9535,
+      "display": [
+        "0.9535"
+      ],
+      "source": "ragate eval",
+      "note": "43 held-out queries",
+      "reproducible": true
+    },
+    "index_units": {
+      "value": 518,
+      "display": [
+        "518"
+      ],
+      "source": "ragate eval",
+      "note": "chunks after collapsing byte-identical text",
+      "reproducible": true
+    },
+    "chunks": {
+      "value": 1260,
+      "display": [
+        "1260"
+      ],
+      "source": "ragate eval",
+      "note": "",
+      "reproducible": true
+    },
+    "documents": {
+      "value": 420,
+      "display": [
+        "420"
+      ],
+      "source": "ragate eval",
+      "note": "",
+      "reproducible": true
+    },
+    "golden_queries": {
+      "value": 140,
+      "display": [
+        "140"
+      ],
+      "source": "ragate eval",
+      "note": "",
+      "reproducible": true
+    },
+    "fail_regression_recall": {
+      "value": 0.8794,
+      "display": [
+        "0.8794"
+      ],
+      "source": "ragate -c configs/candidate-fixed-chunking.yaml gate",
+      "note": "",
+      "reproducible": true
+    },
+    "fail_regression_delta": {
+      "value": -0.0644,
+      "display": [
+        "-0.0644"
+      ],
+      "source": "ragate -c configs/candidate-fixed-chunking.yaml gate",
+      "note": "",
+      "reproducible": true
+    },
+    "fail_regression_interval": {
+      "value": [
+        -0.1017,
+        -0.0318
+      ],
+      "display": [
+        "[-0.1017, -0.0318]"
+      ],
+      "source": "ragate -c configs/candidate-fixed-chunking.yaml gate",
+      "note": "95% paired bootstrap, 5000 resamples",
+      "reproducible": true
+    },
+    "fail_regression_status": {
+      "value": "FAIL",
+      "display": [
+        "FAIL"
+      ],
+      "source": "ragate -c configs/candidate-fixed-chunking.yaml gate",
+      "note": "",
+      "reproducible": true
+    },
+    "fail_regression_regressed_queries": {
+      "value": 10,
+      "display": [
+        "10"
+      ],
+      "source": "ragate -c configs/candidate-fixed-chunking.yaml gate",
+      "note": "",
+      "reproducible": true
+    },
+    "warn_borderline_recall": {
+      "value": 0.9286,
+      "display": [
+        "0.9286"
+      ],
+      "source": "ragate -c configs/candidate-borderline.yaml gate",
+      "note": "",
+      "reproducible": true
+    },
+    "warn_borderline_delta": {
+      "value": -0.0152,
+      "display": [
+        "-0.0152"
+      ],
+      "source": "ragate -c configs/candidate-borderline.yaml gate",
+      "note": "",
+      "reproducible": true
+    },
+    "warn_borderline_interval": {
+      "value": [
+        -0.0386,
+        0.0024
+      ],
+      "display": [
+        "[-0.0386, 0.0024]"
+      ],
+      "source": "ragate -c configs/candidate-borderline.yaml gate",
+      "note": "95% paired bootstrap, 5000 resamples",
+      "reproducible": true
+    },
+    "warn_borderline_status": {
+      "value": "WARN",
+      "display": [
+        "WARN"
+      ],
+      "source": "ragate -c configs/candidate-borderline.yaml gate",
+      "note": "",
+      "reproducible": true
+    },
+    "warn_borderline_regressed_queries": {
+      "value": 3,
+      "display": [
+        "3"
+      ],
+      "source": "ragate -c configs/candidate-borderline.yaml gate",
+      "note": "",
+      "reproducible": true
+    },
+    "fail_no_reranker_recall": {
+      "value": 0.9133,
+      "display": [
+        "0.9133"
+      ],
+      "source": "ragate -c configs/candidate-no-reranker.yaml gate",
+      "note": "",
+      "reproducible": true
+    },
+    "fail_no_reranker_delta": {
+      "value": -0.0305,
+      "display": [
+        "-0.0305"
+      ],
+      "source": "ragate -c configs/candidate-no-reranker.yaml gate",
+      "note": "",
+      "reproducible": true
+    },
+    "fail_no_reranker_interval": {
+      "value": [
+        -0.06,
+        -0.0071
+      ],
+      "display": [
+        "[-0.0600, -0.0071]"
+      ],
+      "source": "ragate -c configs/candidate-no-reranker.yaml gate",
+      "note": "95% paired bootstrap, 5000 resamples",
+      "reproducible": true
+    },
+    "fail_no_reranker_status": {
+      "value": "FAIL",
+      "display": [
+        "FAIL"
+      ],
+      "source": "ragate -c configs/candidate-no-reranker.yaml gate",
+      "note": "",
+      "reproducible": true
+    },
+    "fail_no_reranker_regressed_queries": {
+      "value": 5,
+      "display": [
+        "5"
+      ],
+      "source": "ragate -c configs/candidate-no-reranker.yaml gate",
+      "note": "",
+      "reproducible": true
+    },
+    "reranker_gain_all_queries": {
+      "value": 0.0305,
+      "display": [
+        "0.0305"
+      ],
+      "source": "ragate gate --baseline baselines/baseline-no-rerank.json",
+      "note": "",
+      "reproducible": true
+    },
+    "reranker_gain_interval": {
+      "value": [
+        0.0071,
+        0.06
+      ],
+      "display": [
+        "[0.0071, 0.0600]"
+      ],
+      "source": "ragate gate --baseline baselines/baseline-no-rerank.json",
+      "note": "",
+      "reproducible": true
+    },
+    "bm25_only_all": {
+      "value": 0.9133,
+      "display": [
+        "0.9133"
+      ],
+      "source": "python tools/tune_retrieval.py",
+      "note": "",
+      "reproducible": true
+    },
+    "bm25_only_eval": {
+      "value": 0.907,
+      "display": [
+        "0.907"
+      ],
+      "source": "python tools/tune_retrieval.py",
+      "note": "",
+      "reproducible": true
+    },
+    "dense_only_all": {
+      "value": 0.8636,
+      "display": [
+        "0.8636"
+      ],
+      "source": "python tools/tune_retrieval.py",
+      "note": "",
+      "reproducible": true
+    },
+    "selected_dense_weight": {
+      "value": 0.0,
+      "display": [
+        "0.0"
+      ],
+      "source": "python tools/tune_retrieval.py",
+      "note": "zero means bm25 alone won the sweep",
+      "reproducible": true
+    },
+    "reranker_train_in_sample": {
+      "value": 0.9395,
+      "display": [
+        "0.9395"
+      ],
+      "source": "python tools/train_reranker.py",
+      "note": "",
+      "reproducible": true
+    },
+    "reranker_train_out_of_fold": {
+      "value": 0.9395,
+      "display": [
+        "0.9395"
+      ],
+      "source": "python tools/train_reranker.py",
+      "note": "GroupKFold by query id, 5 folds",
+      "reproducible": true
+    },
+    "reranker_eval_without": {
+      "value": 0.907,
+      "display": [
+        "0.907"
+      ],
+      "source": "python tools/train_reranker.py",
+      "note": "",
+      "reproducible": true
+    },
+    "reranker_eval_with": {
+      "value": 0.9535,
+      "display": [
+        "0.9535"
+      ],
+      "source": "python tools/train_reranker.py",
+      "note": "",
+      "reproducible": true
+    },
+    "reranker_candidate_rows": {
+      "value": 4066,
+      "display": [
+        "4066"
+      ],
+      "source": "python tools/train_reranker.py",
+      "note": "",
+      "reproducible": true
+    },
+    "chunk_reranker_eval": {
+      "value": 0.8411,
+      "display": [
+        "0.8411"
+      ],
+      "source": "python experiments/chunk_level_reranker.py",
+      "note": "the rejected chunk-level variant",
+      "reproducible": true
+    },
+    "chunk_reranker_eval_delta": {
+      "value": -0.0659,
+      "display": [
+        "0.0659"
+      ],
+      "source": "python experiments/chunk_level_reranker.py",
+      "note": "",
+      "reproducible": true
+    },
+    "chunk_reranker_breadth_coefficient": {
+      "value": 0.6553,
+      "display": [
+        "+0.6553"
+      ],
+      "source": "python experiments/chunk_level_reranker.py",
+      "note": "the sign that gave the flaw away",
+      "reproducible": true
+    },
+    "dedupe_vectors_saved_pct": {
+      "value": 58.9,
+      "display": [
+        "58.9%"
+      ],
+      "source": "python benchmark/bench_dedupe_effect.py",
+      "note": "",
+      "reproducible": true
+    },
+    "parity_with_duplicates_3x": {
+      "value": 0.93951,
+      "display": [
+        "0.93951"
+      ],
+      "source": "python benchmark/bench_dedupe_effect.py",
+      "note": "",
+      "reproducible": true
+    },
+    "parity_deduped_3x": {
+      "value": 0.99925,
+      "display": [
+        "0.99925"
+      ],
+      "source": "python benchmark/bench_dedupe_effect.py",
+      "note": "",
+      "reproducible": true
+    },
+    "parity_with_duplicates_12x": {
+      "value": 0.9096,
+      "display": [
+        "0.9096"
+      ],
+      "source": "python benchmark/bench_dedupe_effect.py",
+      "note": "",
+      "reproducible": true
+    },
+    "parity_deduped_12x": {
+      "value": 0.99872,
+      "display": [
+        "0.99872"
+      ],
+      "source": "python benchmark/bench_dedupe_effect.py",
+      "note": "",
+      "reproducible": true
+    },
+    "exact_p95_smallest": {
+      "value": 0.152,
+      "display": [
+        "0.152"
+      ],
+      "source": "python benchmark/bench_retrieval.py",
+      "note": "",
+      "reproducible": true
+    },
+    "exact_p95_largest": {
+      "value": 1.39,
+      "display": [
+        "1.39"
+      ],
+      "source": "python benchmark/bench_retrieval.py",
+      "note": "",
+      "reproducible": true
+    },
+    "exact_p99_largest": {
+      "value": 4.434,
+      "display": [
+        "4.434"
+      ],
+      "source": "python benchmark/bench_retrieval.py",
+      "note": "",
+      "reproducible": true
+    },
+    "largest_index_vectors": {
+      "value": 12673,
+      "display": [
+        "12,673"
+      ],
+      "source": "python benchmark/bench_retrieval.py",
+      "note": "",
+      "reproducible": true
+    },
+    "test_count": {
+      "value": 159,
+      "display": [
+        "159"
+      ],
+      "source": "pytest --junitxml",
+      "note": "",
+      "reproducible": true
+    },
+    "line_coverage_pct": {
+      "value": 92.0,
+      "display": [
+        "92%",
+        "92.0%"
+      ],
+      "source": "pytest --cov=ragate --cov-report=xml",
+      "note": "",
+      "reproducible": true
+    }
+  }
+}

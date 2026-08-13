@@ -312,7 +312,8 @@ The check asked `value in readme_text`. For `0.8762` that is a real assertion. F
 not, because any long document contains `11` somewhere, and short strings are exactly what
 counts of things look like. Three defects were sitting inside that blind spot: the sentence
 describing the blame table said 10 queries where the gate lists 11, the Quickstart advertised
-159 tests when the suite had 170, and a config comment plus a module docstring were not read
+159 tests when the suite had 170 at the time, and a config comment plus a module docstring
+were not read
 at all, so the candidate profile's header still quoted the pre-fix recall that ADR-006 had
 just replaced.
 

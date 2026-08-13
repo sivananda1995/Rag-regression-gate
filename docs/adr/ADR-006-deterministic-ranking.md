@@ -27,20 +27,31 @@ project already had once (see the war story in the README, where set iteration o
 into a hash function).
 
 It was ties. Counting them settled it: **24 of the 140 golden queries have an exact tie at
-the k=5 boundary**, because a templated corpus produces documents whose BM25 scores are
-equal to the bit. The retriever then used `np.argpartition` to take the top k, and
-`argpartition` does not define which of several equal elements lands inside the cut. Its
-answer depends on the numpy build, and therefore on the machine.
+the k=5 boundary**, because a templated corpus produces documents whose BM25 scores are equal
+to the bit. The retriever then used `np.argpartition` to take the top k, and `argpartition`
+does not define which of several equal elements lands inside the cut, so the result is
+whatever its selection algorithm happens to do on that machine.
 
-Confirmation came from a perturbation test: multiplying every score by `1 + 1e-12 * noise`,
-which is the scale at which two machines' arithmetic differs, moved recall@5 from 0.828929 to
-0.830714. The ranking was balanced on knife edges.
+Worth recording what did **not** reproduce it, because it changes what the fix had to be. The
+obvious hypothesis was the numpy version, so both 1.26.4 and 2.4.4 were run against the
+pre-fix code here: both returned 0.879405, the local value. So the runner differs in something
+else, most likely CPU feature dispatch inside the partition kernel, which selects different
+SIMD paths on different hardware. That is not worth chasing further, because it is not
+knowable from here and it is not the actual problem.
+
+The actual problem is that the ranking had no defined answer for a tie, so *any* difference in
+the machine was free to change it. That is provable locally without reproducing the runner:
+multiplying every score by `1 + 1e-12 * noise`, the scale at which two machines' arithmetic
+differs, moved recall@5 from 0.828929 to 0.830714. The ranking was balanced on knife edges,
+and the fix had to remove the knife edges rather than pin the machine.
 
 ## Options considered
 
-**A. Pin numpy exactly.** Would make the two machines agree today. It fixes the symptom
-while leaving the ranking undefined, so the next numpy bump silently changes published
-numbers, and any consumer of this tool on a different platform gets different verdicts.
+**A. Pin numpy exactly.** The first thing anyone reaches for, and here it would not even have
+worked: both numpy versions produce the local value, so the runner's difference comes from
+somewhere a pin does not reach. Even where pinning does mask a difference, it leaves the
+ranking undefined, so the next bump silently changes published numbers and any consumer on
+different hardware gets different verdicts.
 
 **B. Loosen the receipts check to a numeric tolerance.** Would make CI pass. It also removes
 the one property that makes the check worth having, and it would have hidden a real defect:
@@ -71,8 +82,10 @@ That was a second, smaller source of the same class of problem.
 ## Consequences
 
 - The perturbation test now passes at 1e-12 and at 1e-9: recall@5 is 0.830714 at all three
-  noise levels. `tests/test_ranking.py` asserts this, along with tie ordering, so the
-  property cannot regress silently.
+  noise levels. `tests/test_ranking.py` asserts this, along with tie ordering, so the property
+  cannot regress silently.
+- Cross-version agreement is now checkable rather than hoped for: the three committed profiles
+  produce identical recall to six decimal places under numpy 1.26.4 and 2.4.4.
 - Every number in the README moved slightly, because the tie ordering changed. That is
   expected and the new values are the reproducible ones. The candidate profile now scores
   0.8762 everywhere rather than 0.8794 here and 0.8826 there.

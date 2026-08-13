@@ -266,17 +266,24 @@ by set iteration order leaking into a computed result. Four runs under different
 
 Then I counted ties, and there it was: **24 of the 140 golden queries have an exact tie at the
 k=5 boundary**, because a templated corpus produces documents with bit-equal BM25 scores. The
-retriever used `np.argpartition` to take the top k, and `argpartition` does not define which
-of several equal elements lands inside the cut. Its answer depends on the numpy build, so it
-depends on the machine. A perturbation test confirmed the mechanism: multiplying every score
-by `1 + 1e-12 * noise`, the scale at which two machines' arithmetic differs, moved recall@5
-from 0.828929 to 0.830714.
+retriever used `np.argpartition` to take the top k, and `argpartition` does not define which of
+several equal elements lands inside the cut.
+
+The next hypothesis was the numpy version, and it was wrong too: running the pre-fix code
+under both 1.26.4 and 2.4.4 gave the local value, 0.879405, both times. So the runner differs
+in something a version pin does not reach, most likely CPU feature dispatch inside the
+partition kernel. Chasing that further would have been the wrong move, because it is not the
+problem. The problem is that a tie had no defined answer, so *any* difference in the machine
+was free to change the verdict, and that is provable without reproducing the runner:
+multiplying every score by `1 + 1e-12 * noise`, the scale at which two machines' arithmetic
+differs, moved recall@5 from 0.828929 to 0.830714.
 
 The fix was to stop leaving the decision to the sort, in `src/ragate/ranking.py`: quantise
 scores to 9 decimals before comparing, then rank with `lexsort` using the index as an explicit
 secondary key. Query terms are now summed in sorted order too, since floating-point addition
-is not associative. The ranking is now identical under perturbations of 1e-12 and 1e-9, and
-`tests/test_ranking.py` asserts exactly that. It costs a full sort instead of a partition,
+is not associative. The ranking is now identical under perturbations of 1e-12 and 1e-9, and under both numpy
+1.26.4 and 2.4.4 to six decimal places, and `tests/test_ranking.py` asserts the perturbation
+property so it cannot regress. It costs a full sort instead of a partition,
 which roughly doubled p95 latency at the largest index size, and that is a trade I would make
 again without thinking about it: [ADR-006](docs/adr/ADR-006-deterministic-ranking.md).
 

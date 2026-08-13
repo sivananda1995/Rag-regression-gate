@@ -28,8 +28,66 @@ from ragate.evaluate import EvalReport, run
 from ragate.gate import evaluate_gate
 from ragate.logging_setup import configure
 
+# Every file that writes a measured value down in prose. The first version of this tool
+# checked the README only, and the numbers duly rotted everywhere else: a config comment
+# still quoted a pre-fix recall figure and a module docstring quoted a held-out score that
+# had moved by four points. A number is either checked or it drifts, so the check follows
+# the numbers instead of the file. See docs/adr/ADR-007-anchored-receipts.md.
+CHECKED_DOCUMENTS = [
+    "README.md",
+    "ragate.yaml",
+    "configs/candidate-fixed-chunking.yaml",
+    "src/ragate/rerank/features.py",
+]
+
+# anchor phrases, as templates with one {} where the measured value belongs. The checker
+# substitutes the value and requires the resulting literal string to appear in one of the
+# documents above, so the claim is pinned to the sentence that makes it rather than to the
+# document as a whole. A metric with a short display string and no anchor is an error:
+# asserting that "11" appears somewhere in a long README proves nothing.
+ANCHORS: dict[str, list[str]] = {
+    "baseline_ndcg_at_5": ["nDCG@5 of {}"],
+    "index_units": ["to {} vectors", "chunks down to {}"],
+    "chunks": ["{} chunks to", "{} chunks down to"],
+    "documents": ["--docs {}"],
+    "golden_queries": ["--queries {}", "of the {} golden queries"],
+    "baseline_zero_hit": ["{} queries were already scoring zero"],
+    "fail_regression_status": ["status {}, with"],
+    "fail_regression_regressed_queries": ["{} queries named in the blame table"],
+    "fail_regression_blanked_queries": [
+        "{} of 140 questions from answered to unanswered",
+        "{} questions that had a correct document in the top 5 now have none",
+    ],
+    "fail_regression_recovered_queries": ["{} that had none now finds one"],
+    "fail_regression_candidate_zero_hit": ["{} questions score zero after the refactor"],
+    "fail_regression_net_blanked_share": ["a net {} of the golden set"],
+    "fail_regression_delta_points": ["costs {} points of recall@5", "%20{}pt%20recall"],
+    "warn_borderline_status": ["reported as {} with an instruction"],
+    "warn_borderline_regressed_queries": ["{} queries affected. The interval contains zero"],
+    "fail_no_reranker_status": ["status {} again"],
+    "fail_no_reranker_regressed_queries": ["with {} queries affected"],
+    "selected_dense_weight": ["dense weight of {}"],
+    "reranker_candidate_rows": ["{} candidate documents"],
+    "reranker_eval_without": ["recall@5 {} without it"],
+    "reranker_eval_with": ["without it, {} with it"],
+    "chunk_reranker_eval": ["down to {}"],
+    "dedupe_vectors_saved_pct": ["removed {} of the vectors"],
+    "exact_p95_smallest": ["| {} ms |", "p95 rising from {} ms"],
+    "exact_p95_largest": ["| {} ms |", "to {} ms at 12,673"],
+    "exact_p99_largest": ["| {} ms |"],
+    "p99_over_p50_largest": ["p99 is now {}x p50"],
+    "test_count": ["badge/tests-{}-", "{} tests, 92% line coverage", "lint, {} tests, and"],
+    "line_coverage_pct": ["badge/coverage-{}25-", "{} line coverage"],
+}
+
 
 def entry(value, display, source: str, note: str = "", reproducible: bool = True) -> dict:
+    """One measured value, with the command that produced it.
+
+    Anchors are attached centrally by :func:`attach_anchors` from the ANCHORS table above,
+    so this stays a description of the measurement and the table stays a single readable
+    list of which sentence in which document each number belongs to.
+    """
     return {
         "value": value,
         "display": display if isinstance(display, list) else [display],
@@ -37,6 +95,22 @@ def entry(value, display, source: str, note: str = "", reproducible: bool = True
         "note": note,
         "reproducible": reproducible,
     }
+
+
+def attach_anchors(metrics: dict) -> None:
+    """Copy the anchor templates onto each metric, and refuse to invent one.
+
+    An anchor naming a metric that no longer exists is a stale check pretending to be a
+    live one, so it fails here rather than being ignored.
+    """
+    unknown = sorted(set(ANCHORS) - set(metrics))
+    if unknown:
+        raise SystemExit(
+            "ANCHORS names metrics that this run did not measure: "
+            f"{', '.join(unknown)}. Remove them or fix the metric name."
+        )
+    for name, record in metrics.items():
+        record["anchors"] = ANCHORS.get(name)
 
 
 def fmt(value: float, places: int = 4) -> str:
@@ -77,6 +151,13 @@ def collect_pipeline(metrics: dict) -> None:
         report.corpus_stats["documents"], str(report.corpus_stats["documents"]), "ragate eval")
     metrics["golden_queries"] = entry(
         report.corpus_stats["queries"], str(report.corpus_stats["queries"]), "ragate eval")
+    # How many queries the default pipeline already answers with nothing correct at all. The
+    # baseline's own floor: without it, a candidate's zero count reads as damage the
+    # candidate did.
+    baseline_zero = sum(1 for q in report.per_query if q.scores["recall_at_k"] == 0.0)
+    metrics["baseline_zero_hit"] = entry(
+        baseline_zero, str(baseline_zero), "ragate eval",
+        "golden queries with no correct document in the top k on the default pipeline")
 
 
 def collect_gate_outcomes(metrics: dict) -> None:
@@ -88,7 +169,8 @@ def collect_gate_outcomes(metrics: dict) -> None:
     }
     for name, profile in scenarios.items():
         cfg = load_config(profile)
-        verdict = evaluate_gate(baseline, run(cfg), cfg.gate)
+        candidate = run(cfg)
+        verdict = evaluate_gate(baseline, candidate, cfg.gate)
         metrics[f"{name}_recall"] = entry(
             round(verdict.candidate, 4), fmt(verdict.candidate), f"ragate -c {profile} gate")
         metrics[f"{name}_delta"] = entry(
@@ -103,6 +185,37 @@ def collect_gate_outcomes(metrics: dict) -> None:
         metrics[f"{name}_regressed_queries"] = entry(
             len(verdict.regressed_queries), str(len(verdict.regressed_queries)),
             f"ragate -c {profile} gate")
+        if name != "fail_regression":
+            continue
+        # The two halves of an honest impact estimate, registered for the one scenario the
+        # README quantifies: questions this profile pushed from some correct document to
+        # none, and the ones it accidentally fixed. Quoting only the first number would
+        # charge the refactor for queries that were already broken before it landed.
+        metrics[f"{name}_blanked_queries"] = entry(
+            len(verdict.blanked_queries), str(len(verdict.blanked_queries)),
+            f"ragate -c {profile} gate",
+            "questions that had a correct document in the top k and now have none")
+        metrics[f"{name}_recovered_queries"] = entry(
+            len(verdict.recovered_queries), str(len(verdict.recovered_queries)),
+            f"ragate -c {profile} gate",
+            "questions that had nothing correct and now do")
+        zero_hit = sum(
+            1 for q in candidate.per_query if q.scores[cfg.gate.primary_metric] == 0.0
+        )
+        metrics[f"{name}_candidate_zero_hit"] = entry(
+            zero_hit, str(zero_hit),
+            f"ragate -c {profile} gate",
+            "total zero-scoring queries on the candidate, including ones already broken")
+        metrics[f"{name}_net_blanked_share"] = entry(
+            round(verdict.net_blanked / verdict.queries_compared, 4),
+            f"{verdict.net_blanked / verdict.queries_compared:.1%}",
+            f"ragate -c {profile} gate",
+            "net questions left with no correct document, as a share of the golden set")
+        # The headline badge and the summary bullets quote the drop in points rather than
+        # in units, so that rounding is measured here too instead of done by hand.
+        metrics[f"{name}_delta_points"] = entry(
+            round(abs(verdict.delta) * 100, 1), f"{abs(verdict.delta) * 100:.1f}",
+            f"ragate -c {profile} gate", "the same delta expressed in points of recall@5")
 
     # The reranker's gain, read in the other direction against the pre-reranker baseline.
     cfg = load_config("ragate.yaml")
@@ -120,13 +233,13 @@ def collect_reports(metrics: dict) -> None:
     tuning = json.loads(Path("docs/tuning_report.json").read_text())
     metrics["bm25_only_all"] = entry(
         tuning["component_baselines"]["bm25"]["all"],
-        str(tuning["component_baselines"]["bm25"]["all"]), "python tools/tune_retrieval.py")
+        fmt(tuning["component_baselines"]["bm25"]["all"]), "python tools/tune_retrieval.py")
     metrics["bm25_only_eval"] = entry(
         tuning["component_baselines"]["bm25"]["eval"],
-        str(tuning["component_baselines"]["bm25"]["eval"]), "python tools/tune_retrieval.py")
+        fmt(tuning["component_baselines"]["bm25"]["eval"]), "python tools/tune_retrieval.py")
     metrics["dense_only_all"] = entry(
         tuning["component_baselines"]["dense"]["all"],
-        str(tuning["component_baselines"]["dense"]["all"]), "python tools/tune_retrieval.py")
+        fmt(tuning["component_baselines"]["dense"]["all"]), "python tools/tune_retrieval.py")
     metrics["selected_dense_weight"] = entry(
         tuning["selected"]["dense_weight"], str(tuning["selected"]["dense_weight"]),
         "python tools/tune_retrieval.py", "zero means bm25 alone won the sweep")
@@ -136,15 +249,15 @@ def collect_reports(metrics: dict) -> None:
     pipeline = training["recall_at_5_full_pipeline"]
     metrics["reranker_train_in_sample"] = entry(
         candidates["reranked_in_sample_optimistic"],
-        str(candidates["reranked_in_sample_optimistic"]), "python tools/train_reranker.py")
+        fmt(candidates["reranked_in_sample_optimistic"]), "python tools/train_reranker.py")
     metrics["reranker_train_out_of_fold"] = entry(
-        candidates["reranked_out_of_fold"], str(candidates["reranked_out_of_fold"]),
+        candidates["reranked_out_of_fold"], fmt(candidates["reranked_out_of_fold"]),
         "python tools/train_reranker.py", "GroupKFold by query id, 5 folds")
     metrics["reranker_eval_without"] = entry(
-        pipeline["eval_split_without_rerank"], str(pipeline["eval_split_without_rerank"]),
+        pipeline["eval_split_without_rerank"], fmt(pipeline["eval_split_without_rerank"]),
         "python tools/train_reranker.py")
     metrics["reranker_eval_with"] = entry(
-        pipeline["eval_split_with_rerank"], str(pipeline["eval_split_with_rerank"]),
+        pipeline["eval_split_with_rerank"], fmt(pipeline["eval_split_with_rerank"]),
         "python tools/train_reranker.py")
     metrics["reranker_candidate_rows"] = entry(
         training["training"]["candidate_documents"],
@@ -153,10 +266,10 @@ def collect_reports(metrics: dict) -> None:
     failed = json.loads(Path("docs/experiments/chunk_level_reranker.json").read_text())
     scores = failed["recall_at_5"]
     metrics["chunk_reranker_eval"] = entry(
-        scores["eval_reranked"], str(scores["eval_reranked"]),
+        scores["eval_reranked"], fmt(scores["eval_reranked"]),
         "python experiments/chunk_level_reranker.py", "the rejected chunk-level variant")
     metrics["chunk_reranker_eval_delta"] = entry(
-        scores["eval_delta"], str(abs(scores["eval_delta"])),
+        scores["eval_delta"], fmt(abs(scores["eval_delta"])),
         "python experiments/chunk_level_reranker.py")
     metrics["chunk_reranker_breadth_coefficient"] = entry(
         failed["coefficients"]["unit_breadth"],
@@ -205,6 +318,13 @@ def collect_reports(metrics: dict) -> None:
     metrics["largest_index_vectors"] = entry(
         largest["index_units"], f"{largest['index_units']:,}",
         "python benchmark/bench_retrieval.py")
+    # The tail-to-median ratio is a claim about the latency distribution's shape, so it is
+    # divided here rather than in prose. A full sort has none of the branch-dependent
+    # variance a partition does, and this is the number that shows it.
+    tail_ratio = largest["flat"]["query_ms"]["p99"] / largest["flat"]["query_ms"]["p50"]
+    metrics["p99_over_p50_largest"] = entry(
+        round(tail_ratio, 2), f"{tail_ratio:.2f}", "python benchmark/bench_retrieval.py",
+        "how much heavier the tail is than the median at the largest index size")
 
 
 def collect_test_health(metrics: dict, skip: bool) -> None:
@@ -241,15 +361,18 @@ def main() -> None:
     collect_gate_outcomes(metrics)
     collect_reports(metrics)
     collect_test_health(metrics, args.skip_tests)
+    attach_anchors(metrics)
 
     payload = {
         "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "environment": {"python": platform.python_version(), "platform": platform.platform()},
         "how_to_use": (
             "Every value here was produced by the command in its source field. "
-            "tools/check_readme_numbers.py asserts the README still contains each display "
-            "string, so a stale claim fails CI."
+            "tools/check_readme_numbers.py asserts that each value still appears in the "
+            "documents listed under checked_documents, and that values with an anchor "
+            "appear inside that exact phrase, so a stale claim fails CI."
         ),
+        "checked_documents": CHECKED_DOCUMENTS,
         "metrics": metrics,
     }
     out = Path(args.out)

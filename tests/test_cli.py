@@ -13,8 +13,9 @@ from ragate.cli import EXIT_BASELINE, EXIT_OK, EXIT_REGRESSION, EXIT_USAGE, main
 def _profile(tmp_path: Path, corpus: Path, queries: Path, **overrides) -> Path:
     body = {
         "corpus": {"path": str(corpus), "queries": str(queries)},
-        "evaluate": {"k": 2},
+        "evaluate": {"k": 2, "splits_path": ""},
         "embedder": {"dimensions": 256},
+        "rerank": {"enabled": False},
         "gate": {"bootstrap_resamples": 500, "baseline_path": str(tmp_path / "baseline.json")},
         "logging": {"level": "WARNING"},
     }
@@ -43,8 +44,9 @@ def test_gate_passes_against_its_own_baseline(tmp_path, corpus_files):
 
 
 def test_gate_fails_when_the_pipeline_degrades(tmp_path, bulk_corpus_files):
-    """Recorded with the working pipeline, then re-run with a chunker that shreds the
-    documents into fragments too small to match a query."""
+    """Recorded with the default BM25 pipeline, then re-run after swapping in an
+    sixteen-dimension dense retriever, which is a plausible-looking change that destroys
+    retrieval quality."""
     corpus, queries = bulk_corpus_files
     baseline_profile = _profile(tmp_path, corpus, queries)
     assert main(["-c", str(baseline_profile), "baseline"]) == EXIT_OK
@@ -52,8 +54,8 @@ def test_gate_fails_when_the_pipeline_degrades(tmp_path, bulk_corpus_files):
         tmp_path,
         corpus,
         queries,
-        chunking={"strategy": "fixed", "target_chars": 16, "overlap_chars": 0},
-        embedder={"idf_weighting": False, "dimensions": 32},
+        retriever={"mode": "dense"},
+        embedder={"idf_weighting": False, "dimensions": 16},
         gate={"max_absolute_drop": 0.01},
     )
     assert main(["-c", str(broken), "gate", "--html", str(tmp_path / "r.html")]) == EXIT_REGRESSION
@@ -65,8 +67,8 @@ def test_warn_only_reports_the_regression_but_exits_zero(tmp_path, bulk_corpus_f
     assert main(["-c", str(_profile(tmp_path, corpus, queries)), "baseline"]) == EXIT_OK
     broken = _profile(
         tmp_path, corpus, queries,
-        chunking={"strategy": "fixed", "target_chars": 16, "overlap_chars": 0},
-        embedder={"idf_weighting": False, "dimensions": 32},
+        retriever={"mode": "dense"},
+        embedder={"idf_weighting": False, "dimensions": 16},
         gate={"max_absolute_drop": 0.01},
     )
     assert main(["-c", str(broken), "gate", "--warn-only"]) == EXIT_OK

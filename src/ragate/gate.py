@@ -160,11 +160,13 @@ def evaluate_gate(
     ci_low, ci_high = paired_bootstrap_ci(
         baseline_scores, candidate_scores, cfg.bootstrap_confidence, cfg.bootstrap_resamples
     )
-    # A drop is distinguishable from noise when the whole interval sits below zero.
-    significant = ci_high < 0.0
+    # A change is distinguishable from noise when the whole interval sits on one side of
+    # zero. Both directions matter: a gate that can only confirm regressions leaves the
+    # team arguing about whether an improvement was real.
+    significant = ci_high < 0.0 or ci_low > 0.0
     breached = delta <= -cfg.max_absolute_drop
 
-    if breached and significant:
+    if breached and significant and delta < 0:
         status = FAIL
         reason = (
             f"{metric} fell {abs(delta):.4f} (tolerance {cfg.max_absolute_drop:.4f}) and the "
@@ -184,6 +186,13 @@ def evaluate_gate(
         reason = (
             f"{metric} fell {abs(delta):.4f}, which is measurable but inside the agreed "
             f"tolerance of {cfg.max_absolute_drop:.4f}"
+        )
+    elif delta > 0 and significant:
+        status = PASS
+        reason = (
+            f"{metric} rose {delta:.4f} and the {int(cfg.bootstrap_confidence * 100)}% "
+            f"interval [{ci_low:.4f}, {ci_high:.4f}] excludes zero, so the gain is larger "
+            "than this golden set's run-to-run noise"
         )
     else:
         status = PASS

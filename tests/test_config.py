@@ -106,3 +106,69 @@ def test_fingerprint_tolerates_a_missing_file(tmp_path):
     fingerprint = load(_profile(tmp_path, body), env={}).fingerprint()
     assert fingerprint["corpus_sha256"] == "missing"
     assert fingerprint["queries_sha256"] == "missing"
+
+
+def test_extends_inherits_the_parent_and_overlays_the_child(tmp_path):
+    parent = tmp_path / "base.yaml"
+    parent.write_text(
+        "evaluate:\n  k: 5\nretriever:\n  mode: bm25\n  bm25_k1: 1.5\nrerank:\n  enabled: true\n"
+    )
+    child = tmp_path / "candidate.yaml"
+    child.write_text("extends: base.yaml\nretriever:\n  bm25_k1: 0.9\n")
+    cfg = load(child, env={})
+    # Overlaid key changes, sibling keys in the same section survive, other sections too.
+    assert cfg.retriever.bm25_k1 == pytest.approx(0.9)
+    assert cfg.retriever.mode == "bm25"
+    assert cfg.evaluate.k == 5
+    assert cfg.rerank.enabled is True
+
+
+def test_extends_resolves_relative_to_the_child_file(tmp_path):
+    (tmp_path / "configs").mkdir()
+    (tmp_path / "ragate.yaml").write_text("evaluate:\n  k: 7\n")
+    child = tmp_path / "configs" / "candidate.yaml"
+    child.write_text("extends: ../ragate.yaml\nevaluate:\n  splits_path: ''\n")
+    cfg = load(child, env={})
+    assert cfg.evaluate.k == 7
+    assert cfg.evaluate.splits_path == ""
+
+
+def test_env_still_wins_over_an_inherited_value(tmp_path):
+    (tmp_path / "base.yaml").write_text("evaluate:\n  k: 5\n")
+    child = tmp_path / "child.yaml"
+    child.write_text("extends: base.yaml\n")
+    assert load(child, env={"RAGATE_EVALUATE_K": "2"}).evaluate.k == 2
+
+
+def test_missing_extends_target_is_reported(tmp_path):
+    child = tmp_path / "child.yaml"
+    child.write_text("extends: nowhere.yaml\n")
+    with pytest.raises(ConfigError, match="extends target does not exist"):
+        load(child, env={})
+
+
+def test_non_string_extends_is_refused(tmp_path):
+    child = tmp_path / "child.yaml"
+    child.write_text("extends:\n  - a.yaml\n")
+    with pytest.raises(ConfigError, match="extends must be a path string"):
+        load(child, env={})
+
+
+def test_an_extends_cycle_is_stopped(tmp_path):
+    a = tmp_path / "a.yaml"
+    b = tmp_path / "b.yaml"
+    a.write_text("extends: b.yaml\n")
+    b.write_text("extends: a.yaml\n")
+    with pytest.raises(ConfigError, match="extends each other|deeper than"):
+        load(a, env={})
+
+
+def test_committed_candidate_profiles_all_load():
+    """Every profile shipped in configs/ has to be valid, or a README instruction is a
+    lie. Cheap test, catches a stale key after a config rename."""
+    from pathlib import Path
+
+    profiles = sorted(Path("configs").glob("*.yaml"))
+    assert profiles, "expected candidate profiles in configs/"
+    for profile in profiles:
+        load(profile).validate()

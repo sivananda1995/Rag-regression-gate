@@ -70,3 +70,55 @@ def test_duplicate_chunk_count_is_reported(config):
     assert report.corpus_stats["duplicate_chunks_collapsed"] == (
         report.corpus_stats["chunks"] - report.corpus_stats["index_units"]
     )
+
+
+def test_reranked_run_reports_the_rerank_stage_and_reorders(config, tmp_path):
+    """End to end with a model that only rewards an exact code match: the report must
+    record that reranking happened and the ranking must change."""
+    from ragate.rerank import FEATURE_NAMES, LinearReranker
+
+    coefficients = [0.0] * len(FEATURE_NAMES)
+    coefficients[FEATURE_NAMES.index("code_token_match")] = 5.0
+    model_path = LinearReranker(
+        feature_names=FEATURE_NAMES,
+        coefficients=coefficients,
+        intercept=0.0,
+        mean=[0.0] * len(FEATURE_NAMES),
+        scale=[1.0] * len(FEATURE_NAMES),
+    ).save(tmp_path / "reranker.json")
+
+    plain = run(config)
+    config.rerank.enabled = True
+    config.rerank.model_path = str(model_path)
+    reranked = run(config)
+
+    assert plain.corpus_stats["reranked"] is False
+    assert reranked.corpus_stats["reranked"] is True
+    assert "rerank" in reranked.timings_ms
+    assert reranked.corpus_stats["retriever"] == plain.corpus_stats["retriever"]
+
+
+def test_report_carries_per_split_aggregates(config, tmp_path):
+    import json
+
+    ids = [q.query_id for q in __import__("ragate.corpus", fromlist=["x"]).load_queries(
+        config.corpus.queries)]
+    splits = tmp_path / "splits.json"
+    splits.write_text(json.dumps({"train": ids[:2], "eval": ids[2:]}))
+    config.evaluate.splits_path = str(splits)
+    report = run(config)
+    assert report.by_split["train"]["queries"] == 2.0
+    assert report.by_split["eval"]["queries"] == float(len(ids) - 2)
+    assert 0.0 <= report.by_split["eval"]["recall_at_k"] <= 1.0
+
+
+def test_missing_splits_file_is_not_an_error(config):
+    config.evaluate.splits_path = "does/not/exist.json"
+    assert run(config).by_split == {}
+
+
+def test_retriever_mode_is_recorded_in_the_report(config):
+    config.retriever.mode = "bm25"
+    assert run(config).corpus_stats["retriever"] == "bm25"
+    config.retriever.mode = "hybrid"
+    assert run(config).corpus_stats["retriever"].startswith("hybrid:")

@@ -1,40 +1,15 @@
-# Candidate profile: fixed 480-character slices. This is the case a plain threshold
-# gate gets wrong: the drop is past the 2 point tolerance, but the paired bootstrap
-# interval still contains zero, so this golden set cannot separate it from noise.
+# Candidate: shrink the reranker's candidate window from 40 to 20, and at the same time
+# tighten the tolerance from 2 points to 1. This is the case a plain threshold gate gets
+# wrong, and it is the reason the WARN state exists.
 #
-# Outcome: recall@5 0.8333, delta -0.0302, interval [-0.0629, +0.0007], verdict WARN.
+# Outcome: recall@5 0.9286, delta -0.0152, which breaches the tightened 1 point
+# tolerance. But the 95% interval [-0.0386, +0.0024] still contains zero, so 140 queries
+# cannot separate this drop from run-to-run noise. Verdict WARN, exit code 0, with the
+# reason telling the team to add golden queries before tightening further.
+extends: ../ragate.yaml
 
-corpus:
-  path: data/corpus.jsonl
-  queries: data/golden_queries.jsonl
-
-chunking:
-  strategy: fixed
-  target_chars: 480
-  overlap_chars: 0
-  dedupe_identical: true
-
-embedder:
-  provider: hashing
-  dimensions: 512
-  idf_weighting: true
-  char_ngram: 4
-
-index:
-  backend: flat
-  metric: cosine
-
-evaluate:
-  k: 5
+rerank:
+  depth: 20
 
 gate:
-  primary_metric: recall_at_k
-  max_absolute_drop: 0.02
-  bootstrap_confidence: 0.95
-  bootstrap_resamples: 5000
-  blame_threshold: 0.5
-  baseline_path: baselines/baseline.json
-
-logging:
-  level: INFO
-  format: json
+  max_absolute_drop: 0.01

@@ -1,0 +1,11 @@
+# Candidate: turn the learned reranker off and serve raw BM25 ranking.
+#
+# Outcome: recall@5 0.9438 to 0.9133, delta -0.0305, interval [-0.0600, -0.0071], FAIL.
+# Two uses for this profile. It proves the reranker is load-bearing rather than
+# decoration, and read in the other direction, against baselines/baseline-no-rerank.json,
+# it is how the reranker's gain was confirmed as a real improvement instead of an
+# argument (see the Makefile target 'prove-reranker').
+extends: ../ragate.yaml
+
+rerank:
+  enabled: false

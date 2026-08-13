@@ -52,9 +52,13 @@ def config(corpus_files):
     cfg.corpus.path = str(corpus)
     cfg.corpus.queries = str(queries)
     cfg.evaluate.k = 2
+    cfg.evaluate.splits_path = ""
     cfg.embedder.dimensions = 256
     cfg.gate.bootstrap_resamples = 500
     cfg.logging.level = "WARNING"
+    # Unit tests must not depend on a trained model living in the repository root, and
+    # the reranker has its own tests that build a model explicitly.
+    cfg.rerank.enabled = False
     return cfg.validate()
 
 

@@ -27,6 +27,7 @@ def _report(scores: dict[str, float], retrieved: dict[str, list[str]] | None = N
         generated_at="2026-08-12T00:00:00+00:00",
         k=5,
         aggregate={"recall_at_k": mean},
+        by_split={},
         per_query=per_query,
         corpus_stats={"documents": 4, "chunks": 8, "chunks_per_document": 2.0,
                       "queries": len(scores), "mean_relevant_per_query": 1.0,

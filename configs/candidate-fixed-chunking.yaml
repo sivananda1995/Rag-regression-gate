@@ -1,40 +1,12 @@
-# Candidate profile: the pull request under review switches the chunker from
-# sentence-window packing to fixed 240-character slices with no overlap, which is a
-# common "simplify the pipeline" change. Everything else is identical to ragate.yaml.
+# Candidate: replace sentence-window packing with fixed 240-character slices, a common
+# "simplify the pipeline" change. Everything else is inherited from ragate.yaml, so the
+# diff a reviewer reads is exactly the change being proposed.
 #
-# Outcome on the committed golden set: recall@5 0.8636 -> 0.8039, and the 95% paired
-# bootstrap interval [-0.1050, -0.0174] excludes zero, so the gate blocks the build.
-corpus:
-  path: data/corpus.jsonl
-  queries: data/golden_queries.jsonl
+# Outcome on the committed golden set: recall@5 0.9438 to 0.8794, and the 95% paired
+# bootstrap interval [-0.1017, -0.0318] excludes zero. The gate blocks the build.
+extends: ../ragate.yaml
 
 chunking:
   strategy: fixed
   target_chars: 240
   overlap_chars: 0
-  dedupe_identical: true
-
-embedder:
-  provider: hashing
-  dimensions: 512
-  idf_weighting: true
-  char_ngram: 4
-
-index:
-  backend: flat
-  metric: cosine
-
-evaluate:
-  k: 5
-
-gate:
-  primary_metric: recall_at_k
-  max_absolute_drop: 0.02
-  bootstrap_confidence: 0.95
-  bootstrap_resamples: 5000
-  blame_threshold: 0.5
-  baseline_path: baselines/baseline.json
-
-logging:
-  level: INFO
-  format: json

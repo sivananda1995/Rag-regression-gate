@@ -1,0 +1,225 @@
+{
+  "generated_at": "2026-08-13T15:05:11+00:00",
+  "metric": "recall_at_k",
+  "protocol": "Configurations are scored on the train split; the best by train score is reported on the eval split, which was not used for selection. Component baselines are shown on both splits for reference.",
+  "environment": {
+    "python": "3.11.15"
+  },
+  "grid": [
+    {
+      "dense_weight": 0.0,
+      "rrf_k": 10,
+      "train": 0.9162,
+      "eval": 0.907,
+      "all": 0.9133
+    },
+    {
+      "dense_weight": 0.0,
+      "rrf_k": 30,
+      "train": 0.9162,
+      "eval": 0.907,
+      "all": 0.9133
+    },
+    {
+      "dense_weight": 0.0,
+      "rrf_k": 60,
+      "train": 0.9162,
+      "eval": 0.907,
+      "all": 0.9133
+    },
+    {
+      "dense_weight": 0.0,
+      "rrf_k": 120,
+      "train": 0.9162,
+      "eval": 0.907,
+      "all": 0.9133
+    },
+    {
+      "dense_weight": 0.1,
+      "rrf_k": 10,
+      "train": 0.9162,
+      "eval": 0.907,
+      "all": 0.9133
+    },
+    {
+      "dense_weight": 0.1,
+      "rrf_k": 30,
+      "train": 0.9141,
+      "eval": 0.9128,
+      "all": 0.9137
+    },
+    {
+      "dense_weight": 0.1,
+      "rrf_k": 60,
+      "train": 0.9141,
+      "eval": 0.9128,
+      "all": 0.9137
+    },
+    {
+      "dense_weight": 0.1,
+      "rrf_k": 120,
+      "train": 0.9141,
+      "eval": 0.9128,
+      "all": 0.9137
+    },
+    {
+      "dense_weight": 0.25,
+      "rrf_k": 10,
+      "train": 0.9141,
+      "eval": 0.907,
+      "all": 0.9119
+    },
+    {
+      "dense_weight": 0.25,
+      "rrf_k": 30,
+      "train": 0.9107,
+      "eval": 0.907,
+      "all": 0.9095
+    },
+    {
+      "dense_weight": 0.25,
+      "rrf_k": 60,
+      "train": 0.9055,
+      "eval": 0.907,
+      "all": 0.906
+    },
+    {
+      "dense_weight": 0.25,
+      "rrf_k": 120,
+      "train": 0.9055,
+      "eval": 0.9128,
+      "all": 0.9077
+    },
+    {
+      "dense_weight": 0.5,
+      "rrf_k": 10,
+      "train": 0.9038,
+      "eval": 0.907,
+      "all": 0.9048
+    },
+    {
+      "dense_weight": 0.5,
+      "rrf_k": 30,
+      "train": 0.9003,
+      "eval": 0.907,
+      "all": 0.9024
+    },
+    {
+      "dense_weight": 0.5,
+      "rrf_k": 60,
+      "train": 0.8969,
+      "eval": 0.907,
+      "all": 0.9
+    },
+    {
+      "dense_weight": 0.5,
+      "rrf_k": 120,
+      "train": 0.8969,
+      "eval": 0.907,
+      "all": 0.9
+    },
+    {
+      "dense_weight": 0.75,
+      "rrf_k": 10,
+      "train": 0.8969,
+      "eval": 0.907,
+      "all": 0.9
+    },
+    {
+      "dense_weight": 0.75,
+      "rrf_k": 30,
+      "train": 0.8969,
+      "eval": 0.907,
+      "all": 0.9
+    },
+    {
+      "dense_weight": 0.75,
+      "rrf_k": 60,
+      "train": 0.8969,
+      "eval": 0.907,
+      "all": 0.9
+    },
+    {
+      "dense_weight": 0.75,
+      "rrf_k": 120,
+      "train": 0.8969,
+      "eval": 0.907,
+      "all": 0.9
+    },
+    {
+      "dense_weight": 1.0,
+      "rrf_k": 10,
+      "train": 0.8969,
+      "eval": 0.907,
+      "all": 0.9
+    },
+    {
+      "dense_weight": 1.0,
+      "rrf_k": 30,
+      "train": 0.8969,
+      "eval": 0.907,
+      "all": 0.9
+    },
+    {
+      "dense_weight": 1.0,
+      "rrf_k": 60,
+      "train": 0.8969,
+      "eval": 0.907,
+      "all": 0.9
+    },
+    {
+      "dense_weight": 1.0,
+      "rrf_k": 120,
+      "train": 0.8969,
+      "eval": 0.907,
+      "all": 0.9
+    },
+    {
+      "dense_weight": 1.5,
+      "rrf_k": 10,
+      "train": 0.8928,
+      "eval": 0.907,
+      "all": 0.8971
+    },
+    {
+      "dense_weight": 1.5,
+      "rrf_k": 30,
+      "train": 0.8876,
+      "eval": 0.907,
+      "all": 0.8936
+    },
+    {
+      "dense_weight": 1.5,
+      "rrf_k": 60,
+      "train": 0.8876,
+      "eval": 0.907,
+      "all": 0.8936
+    },
+    {
+      "dense_weight": 1.5,
+      "rrf_k": 120,
+      "train": 0.8876,
+      "eval": 0.907,
+      "all": 0.8936
+    }
+  ],
+  "component_baselines": {
+    "bm25": {
+      "train": 0.9162,
+      "eval": 0.907,
+      "all": 0.9133
+    },
+    "dense": {
+      "train": 0.8512,
+      "eval": 0.8915,
+      "all": 0.8636
+    }
+  },
+  "selected": {
+    "dense_weight": 0.0,
+    "rrf_k": 60,
+    "train": 0.9162,
+    "eval": 0.907,
+    "all": 0.9133
+  }
+}

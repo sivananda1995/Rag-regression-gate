@@ -3,21 +3,21 @@
 **A CI gate that blocks a pull request when RAG retrieval quality drops, and confirms when a change genuinely improved it, using a tolerance plus a paired bootstrap so noise on a small golden set cannot cry wolf.**
 
 [![ci](https://github.com/USERNAME/rag-regression-gate/actions/workflows/ci.yml/badge.svg)](https://github.com/USERNAME/rag-regression-gate/actions/workflows/ci.yml)
-[![tests 159](https://img.shields.io/badge/tests-159-2a78d6)](#tests-coverage-and-receipts)
+[![tests 170](https://img.shields.io/badge/tests-170-2a78d6)](#tests-coverage-and-receipts)
 [![coverage 92%](https://img.shields.io/badge/coverage-92%25-2a78d6)](#tests-coverage-and-receipts)
 [![readme numbers machine checked](https://img.shields.io/badge/readme%20numbers-machine%20checked-1baf7a)](#every-number-here-is-checked-by-ci)
-[![catches a 6.4pt recall drop](https://img.shields.io/badge/demo-catches%20a%206.4pt%20recall%405%20drop-e34948)](#the-four-outcomes-on-real-runs)
+[![catches a 6.8pt recall drop](https://img.shields.io/badge/demo-catches%20a%206.8pt%20recall%405%20drop-e34948)](#the-four-outcomes-on-real-runs)
 [![license MIT](https://img.shields.io/badge/license-MIT-52514e)](LICENSE)
 
 ## What this solves
 
-- **A chunker or model change silently breaks retrieval and nothing fails.** This gate scores a labeled golden set on every pull request and exits non-zero on a real drop: in the included demo it catches a fixed-size chunking change that costs 6.4 points of recall@5 and takes 10 of 140 questions from answered to unanswered.
+- **A chunker or model change silently breaks retrieval and nothing fails.** This gate scores a labeled golden set on every pull request and exits non-zero on a real drop: in the included demo it catches a fixed-size chunking change that costs 6.8 points of recall@5 and takes 10 of 140 questions from answered to unanswered.
 - **Threshold-only gates fire on noise, so teams switch them off.** A drop must clear the agreed tolerance *and* a 95% paired bootstrap interval that excludes zero. The included borderline case, a drop of -0.0152 with interval `[-0.0386, 0.0024]`, is reported as WARN with an instruction to enlarge the golden set, not as a failed build.
 - **"Recall went up" is an argument until someone measures it.** The same machinery confirms improvements: the reranker in this repository earns +0.0305 recall@5 with interval `[0.0071, 0.0600]`, and that is why it shipped. Two other plausible improvements were measured and thrown away, which is documented below.
 
 ## Executive summary
 
-Retrieval pipelines fail quietly. A model swap, a chunk-size tweak, or a normalisation change moves which documents come back, and usually nothing in CI notices, because the unit tests still pass and the service still returns 200. The failure surfaces later as users not finding answers. In this repository's own demo, one plausible refactor, sentence-window chunking replaced by fixed 240-character slices, drops recall@5 from 0.9438 to 0.8794 and leaves 10 of 140 labeled questions with no correct document in the top 5. On a support search handling 5,000 queries a day, that ratio works out to roughly 360 searches a day that stop finding their answer; the 5,000 is an assumption, the 7.1% is measured.
+Retrieval pipelines fail quietly. A model swap, a chunk-size tweak, or a normalisation change moves which documents come back, and usually nothing in CI notices, because the unit tests still pass and the service still returns 200. The failure surfaces later as users not finding answers. In this repository's own demo, one plausible refactor, sentence-window chunking replaced by fixed 240-character slices, drops recall@5 from 0.9438 to 0.8762 and leaves 10 of 140 labeled questions with no correct document in the top 5. On a support search handling 5,000 queries a day, that ratio works out to roughly 360 searches a day that stop finding their answer; the 5,000 is an assumption, the 7.1% is measured.
 
 `ragate` turns retrieval quality into a build status. It scores a labeled golden set through a configurable pipeline (chunker, retriever, reranker), records per-query scores, and compares a candidate run against a baseline committed to git and reviewed in the pull request like any other file. Failing a build needs two independent conditions: the metric must fall further than the tolerance the team agreed on, and a paired bootstrap over per-query differences must place the whole confidence interval below zero. When only the first holds, the gate says so and asks for more golden queries rather than blocking anyone.
 
@@ -31,7 +31,7 @@ Every line of terminal text above is the real stdout and stderr of the command s
 
 ## The four outcomes on real runs
 
-**A regression, blocked. Exit code 1.** Fixed-size chunking: recall@5 0.9438 to 0.8794, delta -0.0644, 95% interval `[-0.1017, -0.0318]`, status FAIL, with 10 queries named in the blame table.
+**A regression, blocked. Exit code 1.** Fixed-size chunking: recall@5 0.9438 to 0.8762, delta -0.0676, 95% interval `[-0.1058, -0.0340]`, status FAIL, with 10 queries named in the blame table.
 
 ![Gate report for a confirmed regression, showing the metric drop, the bootstrap interval, and the per-query blame table naming the documents that fell out of the top five](docs/screenshots/gate_fail_report.png)
 
@@ -103,9 +103,9 @@ This is the part of the repository I would most want reviewed, because it is the
 
 **Rejected: hybrid retrieval.** Fusing BM25 with the dense retriever by reciprocal rank is the standard recommendation, and it did not work here. BM25 alone scores 0.9133 across all queries while the equal-weight fusion scored lower, and a sweep over seven dense weights and four `rrf_k` values, selected on the train split only, landed on a dense weight of 0.0, which is BM25 by another name. Checking per query explained it: the dense retriever, a reproducible hashing embedder rather than a semantic model, beat BM25 on **zero** of the 140 golden queries, scoring 0.8636 overall. Fusion cannot add information that one component does not have. The BM25 implementation, the fusion code, and the sweep all stay in the repository, because the question becomes live again the moment a real embedding model is plugged in, and then the sweep answers it in one command. See `docs/tuning_report.json` and ADR-004.
 
-**Rejected: reranking chunks.** The first reranker scored the chunks that retrieval returns, which seemed obvious, and it destroyed held-out recall: 0.9070 down to 0.8411, a loss of 0.0659, while looking fine in training. The coefficients gave it away. The largest positive weight, +0.6553, sat on the number of documents a chunk belongs to. That is not a relevance signal. A chunk shared by thirty articles has thirty chances of touching one of the labeled documents, so a chunk-level label rewards promoting boilerplate, while recall@5 counts distinct documents and is unimpressed. The rejected variant is preserved as a runnable experiment (`python experiments/chunk_level_reranker.py`) so this paragraph can be checked instead of believed.
+**Rejected: reranking chunks.** The first reranker scored the chunks that retrieval returns, which seemed obvious, and it destroyed held-out recall: 0.9070 down to 0.8411, a loss of 0.0659, while looking fine in training. The coefficients gave it away. The largest positive weight, +0.6538, sat on the number of documents a chunk belongs to. That is not a relevance signal. A chunk shared by thirty articles has thirty chances of touching one of the labeled documents, so a chunk-level label rewards promoting boilerplate, while recall@5 counts distinct documents and is unimpressed. The rejected variant is preserved as a runnable experiment (`python experiments/chunk_level_reranker.py`) so this paragraph can be checked instead of believed.
 
-**Kept: reranking documents.** Aggregating the evidence from every retrieved chunk up to the document, labeling documents, and ranking documents put the model and the metric back on the same objective. Trained on 4066 candidate documents from the 97 train queries, it scores 0.9395 in sample and 0.9395 out of fold, and on the 43 held-out queries it moves recall@5 from 0.9070 to 0.9535. The in-sample and out-of-fold numbers being identical is the useful signal: with eleven features and a linear model there is nothing to memorise.
+**Kept: reranking documents.** Aggregating the evidence from every retrieved chunk up to the document, labeling documents, and ranking documents put the model and the metric back on the same objective. Trained on 4068 candidate documents from the 97 train queries, it scores 0.9395 in sample and 0.9361 out of fold, and on the 43 held-out queries it moves recall@5 from 0.9070 to 0.9535. The gap between in-sample and out-of-fold is 0.0034, which is the useful signal: with eleven features and a linear model there is almost nothing to memorise.
 
 ## Method: what may look at which queries
 
@@ -131,7 +131,7 @@ That last row matters and is easy to get wrong in the other direction. Leakage i
 | FAISS HNSW (optional) | Second index backend | Lets the approximate-search penalty be measured deliberately rather than absorbed into the gate's noise floor (ADR-001) |
 | scikit-learn (dev only) | Trains the reranker | Training is a developer task; inference is 20 lines of numpy, so adopting the gate does not drag scikit-learn into a CI image |
 | PyYAML with an `extends` key | Config profiles | A candidate pipeline is the lines that differ from `ragate.yaml`, so the pull request diff is the change itself rather than a forty-line copy that drifts |
-| pytest, pytest-cov | 159 tests, 92% line coverage | Metrics and BM25 are asserted against hand computation, so a refactor cannot quietly redefine recall |
+| pytest, pytest-cov | 170 tests, 92% line coverage | Metrics and BM25 are asserted against hand computation, so a refactor cannot quietly redefine recall |
 | ruff | Lint and import order | One fast tool, runs on every commit |
 | Playwright with Chromium, ffmpeg | Screenshots and the demo video, in `tools/` | Every image and the video in this README are rendered from the tool's real output, so the documentation cannot drift from the behaviour |
 | matplotlib | Benchmark charts | Generated from `benchmark/results/*.json`, never drawn by hand |
@@ -180,19 +180,21 @@ Method: `benchmark/bench_retrieval.py` times single-query searches one at a time
 
 | corpus | documents | chunks | vectors indexed | exact p50 | exact p95 | exact p99 | HNSW p95 | HNSW score parity |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1x | 420 | 1260 | 518 | 0.081 ms | 0.152 ms | 0.204 ms | 0.120 ms | 1.00000 |
-| 3x | 1260 | 4173 | 1601 | 0.121 ms | 0.201 ms | 0.273 ms | 0.147 ms | 0.99928 |
-| 6x | 2520 | 8380 | 3167 | 0.204 ms | 0.287 ms | 0.334 ms | 0.236 ms | 0.99713 |
-| 12x | 5040 | 17326 | 6364 | 0.435 ms | 0.569 ms | 0.748 ms | 0.231 ms | 0.99786 |
-| 24x | 10080 | 34489 | 12,673 | 1.110 ms | 1.39 ms | 4.434 ms | 0.335 ms | 0.99642 |
+| 1x | 420 | 1260 | 518 | 0.117 ms | 0.241 ms | 0.284 ms | 0.152 ms | 1.00000 |
+| 3x | 1260 | 4173 | 1601 | 0.213 ms | 0.345 ms | 0.408 ms | 0.185 ms | 0.99928 |
+| 6x | 2520 | 8380 | 3167 | 0.450 ms | 0.547 ms | 0.667 ms | 0.205 ms | 0.99713 |
+| 12x | 5040 | 17326 | 6364 | 0.984 ms | 1.329 ms | 1.707 ms | 0.229 ms | 0.99509 |
+| 24x | 10080 | 34489 | 12,673 | 2.559 ms | 2.836 ms | 3.263 ms | 0.378 ms | 0.99488 |
 
-Where it degrades, honestly: exact search is O(n) per query and the table shows it, with p95 rising from 0.152 ms at 518 vectors to 1.39 ms at 12,673. The knee is at the tail rather than the median: at 24x the p99 of 4.434 ms is four times the p50, because a 26 MB score matrix stops fitting comfortably in cache and the tail pays for memory traffic. HNSW stays nearly flat across the same range and gives up 0.4% of similarity mass at the largest size. For a golden set none of this bites, since a full 140-query gate run costs about a quarter of a second; past roughly 10^6 vectors the gate should switch backends, and ADR-001 states the trigger.
+Where it degrades, honestly: exact search is O(n log n) per query here rather than O(n), and the table shows it, with p95 rising from 0.241 ms at 518 vectors to 2.836 ms at 12,673. The log factor is a deliberate cost. An earlier version used `np.argpartition`, which is O(n) and about twice as fast at the largest size, and whose tie behaviour is unspecified: it produced different verdicts on different machines, which is the failure described in [ADR-006](docs/adr/ADR-006-deterministic-ranking.md). Paying 1.4 ms at 12,673 vectors to make a verdict reproducible is not a close call.
+
+The distribution is tighter than it used to be as well: p99 is now 1.28x p50 rather than 4x, because a full sort has none of the branch-dependent variance a partition does. HNSW stays nearly flat across the whole range and gives up 0.5% of similarity mass at the largest size. For a golden set none of this bites, since a full 140-query gate run still costs about a quarter of a second; past roughly 10^6 vectors the gate should switch backends, and ADR-001 states the trigger.
 
 "Score parity" is the honest way to measure an approximate index: the true cosine similarity of what HNSW returned, divided by the true cosine similarity of the exact top-k. Top-k set overlap alone punishes an index for swapping two documents of equal similarity, and it was the misleading measure that nearly produced a wrong conclusion here, described below.
 
 ## Tests, coverage, and receipts
 
-159 tests, 92% line coverage, measured with `pytest --cov=ragate`. CI enforces a 90% floor by parsing `coverage.xml`, so the badge cannot rot. The uncovered remainder is dominated by two adapters that cannot be exercised where this was built: the OpenAI embedding provider and the Anthropic reranker both need network access the build environment does not have. Their error paths and pure logic are tested, their request paths are not, and no number in this README comes from either.
+170 tests, 92% line coverage, measured with `pytest --cov=ragate`. CI enforces a 90% floor by parsing `coverage.xml`, so the badge cannot rot. The uncovered remainder is dominated by two adapters that cannot be exercised where this was built: the OpenAI embedding provider and the Anthropic reranker both need network access the build environment does not have. Their error paths and pure logic are tested, their request paths are not, and no number in this README comes from either.
 
 ### Every number here is checked by CI
 
@@ -213,6 +215,7 @@ Full records in [`docs/adr/`](docs/adr/):
 - [ADR-003: a drop must clear both a tolerance and a paired bootstrap interval](docs/adr/ADR-003-paired-bootstrap-over-fixed-threshold.md). Why a paired bootstrap rather than a t-test, and why the gate may answer "I cannot tell".
 - [ADR-004: rank fusion, and why the hybrid retriever is off by default](docs/adr/ADR-004-rank-fusion-and-why-hybrid-is-off.md). A measured negative result and the condition for revisiting it.
 - [ADR-005: the reranker ranks documents, and is evaluated out of fold](docs/adr/ADR-005-document-level-reranking-and-out-of-fold-evaluation.md). The objective-mismatch bug and the train/eval discipline.
+- [ADR-006: ranking is a total order, quantised, with an explicit tie break](docs/adr/ADR-006-deterministic-ranking.md). Why `np.argpartition` made this gate give different verdicts on different machines, and what replaced it.
 
 ## Intentionally out of scope
 
@@ -247,15 +250,50 @@ Full records in [`docs/adr/`](docs/adr/):
 
 ## Hardest problem solved
 
-The approximate index looked fine, then it looked broken, and both readings were wrong.
+Two, and the second one was caught by this repository's own receipts check after it was
+pushed, which is the best argument for building the check in the first place.
+
+### The gate gave different verdicts on different machines
+
+The first push to GitHub failed the `readme-receipts` job. Three numbers differed between the
+runner and the machine this was built on, with identical code, identical data, and the same
+committed model: the candidate profile scored 0.8826 there and 0.8794 here, with the delta
+and the bootstrap interval shifted to match.
+
+The first suspect was the interpreter's hash seed, since this project had already been bitten
+by set iteration order leaking into a computed result. Four runs under different
+`PYTHONHASHSEED` values returned 0.879405 every time, which ruled it out.
+
+Then I counted ties, and there it was: **24 of the 140 golden queries have an exact tie at the
+k=5 boundary**, because a templated corpus produces documents with bit-equal BM25 scores. The
+retriever used `np.argpartition` to take the top k, and `argpartition` does not define which
+of several equal elements lands inside the cut. Its answer depends on the numpy build, so it
+depends on the machine. A perturbation test confirmed the mechanism: multiplying every score
+by `1 + 1e-12 * noise`, the scale at which two machines' arithmetic differs, moved recall@5
+from 0.828929 to 0.830714.
+
+The fix was to stop leaving the decision to the sort, in `src/ragate/ranking.py`: quantise
+scores to 9 decimals before comparing, then rank with `lexsort` using the index as an explicit
+secondary key. Query terms are now summed in sorted order too, since floating-point addition
+is not associative. The ranking is now identical under perturbations of 1e-12 and 1e-9, and
+`tests/test_ranking.py` asserts exactly that. It costs a full sort instead of a partition,
+which roughly doubled p95 latency at the largest index size, and that is a trade I would make
+again without thinking about it: [ADR-006](docs/adr/ADR-006-deterministic-ranking.md).
+
+Two things are worth saying about this one. The receipts check paid for itself on its first
+real use, catching a defect that no test on one machine could have found. And the honest
+consequence is that every number in this README moved slightly when it was fixed, because the
+tie ordering changed; the values here are the reproducible ones.
+
+### The approximate index looked fine, then it looked broken, and both readings were wrong
 
 Comparing HNSW against exact search by the obvious measure, how much of the top-k document set the two agree on, gave 0.97 at the base corpus size, which is what the literature predicts. Padding the corpus to three times its size dropped agreement to 0.57, and twelve times to 0.54. Read at face value that says HNSW is unusable at any real scale, which contradicts most of the industry, so the measurement was likelier wrong than the index.
 
-First hypothesis: ties. If many chunks score almost identically, set overlap punishes an index for returning an equally good document in a different order. So I checked the score spread across the top 20 and built a tie-insensitive measure, retrieved-score parity: the true cosine similarity of what HNSW returned divided by the exact optimum. It refuted the hypothesis rather than confirming it. Parity was 0.93951 at 3x with a worst case of 0.23, and on the worst query all six HNSW results shared an identical similarity of 0.1132 while exact search was returning 0.24. That is not tie ordering, that is a search landing somewhere bad.
+First hypothesis: ties. If many chunks score almost identically, set overlap punishes an index for returning an equally good document in a different order. So I checked the score spread across the top 20 and built a tie-insensitive measure, retrieved-score parity: the true cosine similarity of what HNSW returned divided by the exact optimum. It refuted the hypothesis rather than confirming it. Parity was 0.93676 at 3x with a worst case of 0.23, and on the worst query all six HNSW results shared an identical similarity of 0.1132 while exact search was returning 0.24. That is not tie ordering, that is a search landing somewhere bad.
 
 Second hypothesis, technically right and practically irrelevant: I had built the index with `METRIC_INNER_PRODUCT`. HNSW navigates by greedy descent over a proximity graph and that descent assumes a true metric, which inner product is not. For unit-length vectors squared L2 is order-equivalent to cosine, so the correct metric is free and I switched to it. Then I measured the switch in isolation and it moved parity by less than a point, inside run-to-run variation. I kept the change because it is correct by construction, and the comment in `indexes/faiss_index.py` says it was not a measured win, because a comment claiming a win the numbers do not support is worse than no comment.
 
-The actual cause turned up by counting: 2,422 of the 3,780 chunks in the padded index were byte-identical to another chunk. The corpus is templated, as real knowledge bases are, so whole passages repeat across articles, and my padding function made it worse by prefixing only the title, leaving every later chunk identical across tenants. Duplicate points wreck an HNSW graph, because neighbour selection cannot build a useful neighbourhood from vectors at zero distance from each other, and greedy search gets trapped among the copies. The fix was to stop indexing the same text twice: group chunks by exact text, index each text once, and carry every document id that text belongs to, expanding hits back to documents at scoring time. On the labeled corpus that removed 58.9% of the vectors, 1260 chunks down to 518, cut a full evaluation roughly in half, and restored parity from 0.93951 to 0.99925 at 3x and from 0.9096 to 0.99872 at 12x.
+The actual cause turned up by counting: 2,422 of the 3,780 chunks in the padded index were byte-identical to another chunk. The corpus is templated, as real knowledge bases are, so whole passages repeat across articles, and my padding function made it worse by prefixing only the title, leaving every later chunk identical across tenants. Duplicate points wreck an HNSW graph, because neighbour selection cannot build a useful neighbourhood from vectors at zero distance from each other, and greedy search gets trapped among the copies. The fix was to stop indexing the same text twice: group chunks by exact text, index each text once, and carry every document id that text belongs to, expanding hits back to documents at scoring time. On the labeled corpus that removed 58.9% of the vectors, 1260 chunks down to 518, cut a full evaluation roughly in half, and restored parity from 0.93676 to 0.99925 at 3x and from 0.92844 to 0.99857 at 12x.
 
 Two things stayed behind. Parity is now a first-class benchmark output, because set overlap alone would have hidden the problem. And `benchmark/bench_dedupe_effect.py` regenerates the whole comparison on demand ([results](benchmark/results/dedupe_effect.md)), so the claim is reproducible rather than remembered. Fix commit: `fix(corpus): index identical chunk text once, mapped to all its documents`.
 

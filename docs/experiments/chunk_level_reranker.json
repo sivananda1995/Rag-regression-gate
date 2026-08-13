@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-13T15:06:51+00:00",
+  "generated_at": "2026-08-13T19:35:17+00:00",
   "environment": {
     "python": "3.11.15"
   },
@@ -20,17 +20,17 @@
     "eval_delta": -0.0659
   },
   "coefficients": {
-    "fused_score": 0.6521,
-    "reciprocal_rank": 0.9239,
-    "token_coverage": -1.8463,
-    "idf_weighted_coverage": 2.3104,
-    "bigram_coverage": -0.0345,
-    "lead_overlap": -0.1727,
-    "code_token_match": 0.1658,
-    "unit_breadth": 0.6553,
-    "unit_length": 0.2887,
-    "top1_jaccard": -1.3611,
-    "top1_lead_jaccard": 1.3536
+    "fused_score": 0.6417,
+    "reciprocal_rank": 0.9252,
+    "token_coverage": -1.8496,
+    "idf_weighted_coverage": 2.34,
+    "bigram_coverage": -0.0556,
+    "lead_overlap": -0.1578,
+    "code_token_match": 0.1711,
+    "unit_breadth": 0.6538,
+    "unit_length": 0.2894,
+    "top1_jaccard": -1.3701,
+    "top1_lead_jaccard": 1.3504
   },
   "diagnosis": "unit_breadth carries a large positive weight, so the model promotes chunks that many documents share. Under a chunk-level label that is rewarded, because a widely shared chunk is more likely to touch some relevant document, but recall@k counts distinct documents and the promoted boilerplate displaces the specific answer."
 }

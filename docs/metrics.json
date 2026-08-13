@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-13T15:08:37+00:00",
+  "generated_at": "2026-08-13T19:36:34+00:00",
   "environment": {
     "python": "3.11.15",
     "platform": "Linux-6.18.5-fc-v20-x86_64-with-glibc2.39"
@@ -98,18 +98,18 @@
       "reproducible": true
     },
     "fail_regression_recall": {
-      "value": 0.8794,
+      "value": 0.8762,
       "display": [
-        "0.8794"
+        "0.8762"
       ],
       "source": "ragate -c configs/candidate-fixed-chunking.yaml gate",
       "note": "",
       "reproducible": true
     },
     "fail_regression_delta": {
-      "value": -0.0644,
+      "value": -0.0676,
       "display": [
-        "-0.0644"
+        "-0.0676"
       ],
       "source": "ragate -c configs/candidate-fixed-chunking.yaml gate",
       "note": "",
@@ -117,11 +117,11 @@
     },
     "fail_regression_interval": {
       "value": [
-        -0.1017,
-        -0.0318
+        -0.1058,
+        -0.034
       ],
       "display": [
-        "[-0.1017, -0.0318]"
+        "[-0.1058, -0.0340]"
       ],
       "source": "ragate -c configs/candidate-fixed-chunking.yaml gate",
       "note": "95% paired bootstrap, 5000 resamples",
@@ -137,9 +137,9 @@
       "reproducible": true
     },
     "fail_regression_regressed_queries": {
-      "value": 10,
+      "value": 11,
       "display": [
-        "10"
+        "11"
       ],
       "source": "ragate -c configs/candidate-fixed-chunking.yaml gate",
       "note": "",
@@ -308,9 +308,9 @@
       "reproducible": true
     },
     "reranker_train_out_of_fold": {
-      "value": 0.9395,
+      "value": 0.9361,
       "display": [
-        "0.9395"
+        "0.9361"
       ],
       "source": "python tools/train_reranker.py",
       "note": "GroupKFold by query id, 5 folds",
@@ -335,9 +335,9 @@
       "reproducible": true
     },
     "reranker_candidate_rows": {
-      "value": 4066,
+      "value": 4068,
       "display": [
-        "4066"
+        "4068"
       ],
       "source": "python tools/train_reranker.py",
       "note": "",
@@ -362,9 +362,9 @@
       "reproducible": true
     },
     "chunk_reranker_breadth_coefficient": {
-      "value": 0.6553,
+      "value": 0.6538,
       "display": [
-        "+0.6553"
+        "+0.6538"
       ],
       "source": "python experiments/chunk_level_reranker.py",
       "note": "the sign that gave the flaw away",
@@ -380,9 +380,9 @@
       "reproducible": true
     },
     "parity_with_duplicates_3x": {
-      "value": 0.93951,
+      "value": 0.93676,
       "display": [
-        "0.93951"
+        "0.93676"
       ],
       "source": "python benchmark/bench_dedupe_effect.py",
       "note": "",
@@ -398,45 +398,45 @@
       "reproducible": true
     },
     "parity_with_duplicates_12x": {
-      "value": 0.9096,
+      "value": 0.92844,
       "display": [
-        "0.9096"
+        "0.92844"
       ],
       "source": "python benchmark/bench_dedupe_effect.py",
       "note": "",
       "reproducible": true
     },
     "parity_deduped_12x": {
-      "value": 0.99872,
+      "value": 0.99857,
       "display": [
-        "0.99872"
+        "0.99857"
       ],
       "source": "python benchmark/bench_dedupe_effect.py",
       "note": "",
       "reproducible": true
     },
     "exact_p95_smallest": {
-      "value": 0.152,
+      "value": 0.241,
       "display": [
-        "0.152"
+        "0.241"
       ],
       "source": "python benchmark/bench_retrieval.py",
       "note": "",
       "reproducible": true
     },
     "exact_p95_largest": {
-      "value": 1.39,
+      "value": 2.836,
       "display": [
-        "1.39"
+        "2.836"
       ],
       "source": "python benchmark/bench_retrieval.py",
       "note": "",
       "reproducible": true
     },
     "exact_p99_largest": {
-      "value": 4.434,
+      "value": 3.263,
       "display": [
-        "4.434"
+        "3.263"
       ],
       "source": "python benchmark/bench_retrieval.py",
       "note": "",
@@ -452,19 +452,19 @@
       "reproducible": true
     },
     "test_count": {
-      "value": 159,
+      "value": 170,
       "display": [
-        "159"
+        "170"
       ],
       "source": "pytest --junitxml",
       "note": "",
       "reproducible": true
     },
     "line_coverage_pct": {
-      "value": 92.0,
+      "value": 92.1,
       "display": [
         "92%",
-        "92.0%"
+        "92.1%"
       ],
       "source": "pytest --cov=ragate --cov-report=xml",
       "note": "",

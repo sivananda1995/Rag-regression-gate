@@ -27,6 +27,7 @@ import numpy as np
 from ..corpus import IndexUnit
 from ..errors import RagateError
 from ..logging_setup import get_logger
+from ..ranking import rank_scores
 from .base import Ranking
 
 log = get_logger(__name__)
@@ -88,7 +89,12 @@ class Bm25Retriever:
         # Only units that contain a query term can score, so the loop walks posting
         # lists rather than the corpus. On this corpus that touches a few percent of
         # units per query instead of all of them.
-        for term in set(tokenize(query)):
+        #
+        # Terms are sorted rather than taken in set order. Floating-point addition is not
+        # associative, so accumulating a unit's term contributions in a different order
+        # changes its score in the last bits, and set iteration order for strings depends
+        # on the interpreter's per-process hash seed. Sorting fixes the order for good.
+        for term in sorted(set(tokenize(query))):
             plist = self._postings.get(term)
             if plist is None:
                 continue
@@ -98,10 +104,7 @@ class Bm25Retriever:
                 scores[position] += idf * frequency * (self.k1 + 1.0) / (
                     frequency + self.k1 * norm
                 )
-        top = min(k, self._count)
-        candidates = np.argpartition(-scores, kth=top - 1)[:top]
-        ordered = candidates[np.argsort(-scores[candidates], kind="stable")]
-        return [(int(position), float(scores[position])) for position in ordered]
+        return rank_scores(scores, k)
 
     def search(self, queries: Sequence[str], k: int) -> list[Ranking]:
         return [self._score_query(query, k) for query in queries]

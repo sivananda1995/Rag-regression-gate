@@ -10,6 +10,7 @@ from __future__ import annotations
 import numpy as np
 
 from ..errors import RagateError
+from ..ranking import rank_rows
 
 
 class FlatIndex:
@@ -33,8 +34,9 @@ class FlatIndex:
             )
         k = min(k, self._vectors.shape[0])
         scores = np.asarray(queries, dtype=np.float32) @ self._vectors.T
-        # argpartition finds the top k in O(n) per query, then only those k are sorted.
-        top = np.argpartition(-scores, kth=k - 1, axis=1)[:, :k]
-        ordered = np.take_along_axis(scores, top, axis=1).argsort(axis=1)[:, ::-1]
-        indices = np.take_along_axis(top, ordered, axis=1)
+        # Ranked under a total order rather than by argpartition, whose tie behaviour is
+        # unspecified and differs between numpy builds. Scores are quantised so last-bit
+        # arithmetic differences cannot reorder anything, and the vector index breaks
+        # remaining ties, so two machines always agree. See ragate/ranking.py.
+        indices = rank_rows(scores, k)
         return np.take_along_axis(scores, indices, axis=1), indices

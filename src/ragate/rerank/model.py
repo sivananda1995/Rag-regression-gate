@@ -23,6 +23,7 @@ import numpy as np
 from ..corpus import IndexUnit
 from ..errors import RagateError
 from ..logging_setup import get_logger
+from ..ranking import quantise
 from .features import FEATURE_NAMES, FeatureContext, extract_documents
 
 log = get_logger(__name__)
@@ -90,6 +91,10 @@ class LinearReranker:
         doc_ids, features = extract_documents(query, ranking, units, ctx)
         if not doc_ids:
             return []
-        scores = self.score(features)
+        # Quantised before sorting for the same reason the retrievers quantise: the model
+        # score is a dot product, whose last bits depend on the BLAS build, and a tie broken
+        # differently on another machine changes the top k. Retrieval order remains the tie
+        # break, so a model that scores everything equally is still a no-op.
+        scores = quantise(self.score(features))
         order = sorted(range(len(doc_ids)), key=lambda i: (-float(scores[i]), i))
         return [doc_ids[i] for i in order]

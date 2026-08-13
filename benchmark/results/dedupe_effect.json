@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-12T20:34:27+00:00",
+  "generated_at": "2026-08-13T19:36:14+00:00",
   "conditions": {
     "python": "3.11.15",
     "platform": "Linux-6.18.5-fc-v20-x86_64-with-glibc2.39",
@@ -16,15 +16,15 @@
       "vectors_saved_pct": 0.0,
       "index_mb": 2.58,
       "exact_query_ms": {
-        "p50": 0.093,
-        "p95": 0.156,
-        "p99": 0.172,
-        "max": 0.457,
-        "mean": 0.104
+        "p50": 0.179,
+        "p95": 0.3,
+        "p99": 0.404,
+        "max": 2.499,
+        "mean": 0.209
       },
-      "hnsw_build_ms": 134.3,
-      "hnsw_score_parity_mean": 0.99457,
-      "hnsw_score_parity_worst": 0.58817
+      "hnsw_build_ms": 144.0,
+      "hnsw_score_parity_mean": 0.99612,
+      "hnsw_score_parity_worst": 0.74502
     },
     {
       "corpus_multiple": 1,
@@ -34,15 +34,15 @@
       "vectors_saved_pct": 58.9,
       "index_mb": 1.06,
       "exact_query_ms": {
-        "p50": 0.09,
-        "p95": 0.164,
-        "p99": 0.205,
-        "max": 0.224,
-        "mean": 0.103
+        "p50": 0.098,
+        "p95": 0.192,
+        "p99": 0.268,
+        "max": 0.469,
+        "mean": 0.117
       },
-      "hnsw_build_ms": 49.1,
-      "hnsw_score_parity_mean": 0.99999,
-      "hnsw_score_parity_worst": 0.99827
+      "hnsw_build_ms": 47.5,
+      "hnsw_score_parity_mean": 1.0,
+      "hnsw_score_parity_worst": 1.0
     },
     {
       "corpus_multiple": 3,
@@ -52,15 +52,15 @@
       "vectors_saved_pct": 0.0,
       "index_mb": 8.55,
       "exact_query_ms": {
-        "p50": 0.256,
-        "p95": 0.37,
-        "p99": 0.417,
-        "max": 1.008,
-        "mean": 0.276
+        "p50": 0.584,
+        "p95": 0.8,
+        "p99": 2.467,
+        "max": 6.117,
+        "mean": 0.656
       },
-      "hnsw_build_ms": 492.2,
-      "hnsw_score_parity_mean": 0.93951,
-      "hnsw_score_parity_worst": 0.22834
+      "hnsw_build_ms": 501.2,
+      "hnsw_score_parity_mean": 0.93676,
+      "hnsw_score_parity_worst": 0.23311
     },
     {
       "corpus_multiple": 3,
@@ -70,13 +70,13 @@
       "vectors_saved_pct": 61.6,
       "index_mb": 3.28,
       "exact_query_ms": {
-        "p50": 0.137,
-        "p95": 0.216,
-        "p99": 0.236,
-        "max": 6.226,
-        "mean": 0.168
+        "p50": 0.227,
+        "p95": 0.323,
+        "p99": 0.399,
+        "max": 0.612,
+        "mean": 0.245
       },
-      "hnsw_build_ms": 173.7,
+      "hnsw_build_ms": 166.2,
       "hnsw_score_parity_mean": 0.99925,
       "hnsw_score_parity_worst": 0.90119
     },
@@ -88,14 +88,14 @@
       "vectors_saved_pct": 0.0,
       "index_mb": 35.48,
       "exact_query_ms": {
-        "p50": 1.64,
-        "p95": 1.996,
-        "p99": 2.695,
-        "max": 8.516,
-        "mean": 1.726
+        "p50": 3.182,
+        "p95": 4.256,
+        "p99": 5.004,
+        "max": 28.486,
+        "mean": 3.393
       },
-      "hnsw_build_ms": 2769.2,
-      "hnsw_score_parity_mean": 0.9096,
+      "hnsw_build_ms": 3023.1,
+      "hnsw_score_parity_mean": 0.92844,
       "hnsw_score_parity_worst": 0.36423
     },
     {
@@ -106,29 +106,29 @@
       "vectors_saved_pct": 63.3,
       "index_mb": 13.03,
       "exact_query_ms": {
-        "p50": 0.392,
-        "p95": 0.496,
-        "p99": 0.608,
-        "max": 0.985,
-        "mean": 0.403
+        "p50": 1.068,
+        "p95": 1.476,
+        "p99": 1.749,
+        "max": 7.528,
+        "mean": 1.165
       },
-      "hnsw_build_ms": 726.1,
-      "hnsw_score_parity_mean": 0.99872,
+      "hnsw_build_ms": 747.2,
+      "hnsw_score_parity_mean": 0.99857,
       "hnsw_score_parity_worst": 0.85696
     }
   ],
   "labeled_corpus_quality": {
     "dedupe_false": {
-      "recall_at_k": 0.8621,
-      "ndcg_at_k": 0.8089,
+      "recall_at_k": 0.9227,
+      "ndcg_at_k": 0.9154,
       "index_units": 1260,
-      "total_ms": 707.3
+      "total_ms": 695.8
     },
     "dedupe_true": {
-      "recall_at_k": 0.8636,
-      "ndcg_at_k": 0.8103,
+      "recall_at_k": 0.9438,
+      "ndcg_at_k": 0.934,
       "index_units": 518,
-      "total_ms": 343.1
+      "total_ms": 411.6
     }
   }
 }

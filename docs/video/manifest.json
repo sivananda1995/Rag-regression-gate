@@ -4,7 +4,7 @@
     {
       "command": "ragate eval -o reports/video-candidate.json",
       "exit_code": 0,
-      "measured_wall_time_s": 0.621
+      "measured_wall_time_s": 0.683
     },
     {
       "command": "cat configs/candidate-fixed-chunking.yaml",
@@ -14,22 +14,22 @@
     {
       "command": "ragate -c configs/candidate-fixed-chunking.yaml gate; echo \"exit=$?\"",
       "exit_code": 0,
-      "measured_wall_time_s": 0.836
+      "measured_wall_time_s": 0.807
     },
     {
       "command": "ragate -c configs/candidate-borderline.yaml gate | head -6; echo \"exit=${PIPESTATUS[0]}\"",
       "exit_code": 0,
-      "measured_wall_time_s": 0.574
+      "measured_wall_time_s": 0.563
     },
     {
       "command": "ragate gate --baseline baselines/baseline-no-rerank.json | head -5",
       "exit_code": 0,
-      "measured_wall_time_s": 0.605
+      "measured_wall_time_s": 0.619
     },
     {
       "command": "python tools/check_readme_numbers.py",
       "exit_code": 0,
-      "measured_wall_time_s": 0.04
+      "measured_wall_time_s": 0.046
     }
   ]
 }

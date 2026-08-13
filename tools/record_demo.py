@@ -17,7 +17,6 @@ Run from the repository root: python tools/record_demo.py
 from __future__ import annotations
 
 import argparse
-import html
 import json
 import shutil
 import subprocess
@@ -167,7 +166,8 @@ function append(line) {{
     holder.innerHTML = typed + '\\n';
     await sleep(320);
     // Reveal the captured output, paced by how long the command really took.
-    const perLine = Math.max(26, Math.min(150, (seg.duration_s * 1000) / Math.max(seg.lines.length, 1)));
+    const lineCount = Math.max(seg.lines.length, 1);
+    const perLine = Math.max(26, Math.min(150, (seg.duration_s * 1000) / lineCount));
     for (const line of seg.lines) {{ append(line); await sleep(perLine); }}
     await sleep(seg.hold_ms);
     out.textContent = '';

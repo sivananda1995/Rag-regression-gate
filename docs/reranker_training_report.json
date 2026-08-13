@@ -1,0 +1,39 @@
+{
+  "generated_at": "2026-08-13T15:05:00+00:00",
+  "environment": {
+    "python": "3.11.15"
+  },
+  "protocol": "Pairs come only from train-split queries. Out-of-fold scores use GroupKFold grouped by query id. The shipped model is refit on all train pairs. The eval-split numbers come from running the full pipeline with the shipped model and were not used for any fitting or selection decision.",
+  "training": {
+    "candidate_documents": 4066,
+    "queries": 97,
+    "positive_rate": 0.0561,
+    "folds": 5,
+    "rerank_depth": 40
+  },
+  "recall_at_5_on_train_candidates": {
+    "retrieval_order": 0.9162,
+    "reranked_in_sample_optimistic": 0.9395,
+    "reranked_out_of_fold": 0.9395
+  },
+  "recall_at_5_full_pipeline": {
+    "all_queries_without_rerank": 0.9133,
+    "all_queries_with_rerank": 0.9438,
+    "train_split_with_rerank": 0.9395,
+    "eval_split_without_rerank": 0.907,
+    "eval_split_with_rerank": 0.9535
+  },
+  "coefficients": {
+    "best_reciprocal_rank": 1.2755,
+    "chunks_hit": 0.7089,
+    "max_fused_score": -1.0448,
+    "sum_fused_score": 1.3092,
+    "max_token_coverage": -3.4832,
+    "max_idf_weighted_coverage": 4.2189,
+    "max_bigram_coverage": 0.318,
+    "max_lead_overlap": -0.0833,
+    "code_token_match": 0.076,
+    "top1_lead_jaccard": 0.777,
+    "mean_chunk_length": 1.9226
+  }
+}

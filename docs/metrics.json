@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-13T20:05:41+00:00",
+  "generated_at": "2026-08-19T19:34:24+00:00",
   "environment": {
     "python": "3.11.15",
     "platform": "Linux-6.18.5-fc-v20-x86_64-with-glibc2.39"
@@ -7,6 +7,7 @@
   "how_to_use": "Every value here was produced by the command in its source field. tools/check_readme_numbers.py asserts that each value still appears in the documents listed under checked_documents, and that values with an anchor appear inside that exact phrase, so a stale claim fails CI.",
   "checked_documents": [
     "README.md",
+    "docs/defense-guide.md",
     "ragate.yaml",
     "configs/candidate-fixed-chunking.yaml",
     "src/ragate/rerank/features.py"

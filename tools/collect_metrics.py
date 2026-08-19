@@ -35,6 +35,9 @@ from ragate.logging_setup import configure
 # the numbers instead of the file. See docs/adr/ADR-007-anchored-receipts.md.
 CHECKED_DOCUMENTS = [
     "README.md",
+    # The defence guide quotes the same figures to a different audience, so it is checked too. A
+    # document read aloud in an interview that has drifted from the code beats a stale README.
+    "docs/defense-guide.md",
     "ragate.yaml",
     "configs/candidate-fixed-chunking.yaml",
     "src/ragate/rerank/features.py",

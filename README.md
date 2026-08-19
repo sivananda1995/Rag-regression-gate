@@ -2,7 +2,7 @@
 
 **A CI gate that blocks a pull request when RAG retrieval quality drops, and confirms when a change genuinely improved it, using a tolerance plus a paired bootstrap so noise on a small golden set cannot cry wolf.**
 
-[![ci](https://github.com/sivananda1995/Rag-regression-gate/actions/workflows/ci.yml/badge.svg)](https://github.com/sivananda1995/Rag-regression-gate/actions/workflows/ci.yml)
+[![ci](https://github.com/sivananda1995/rag-regression-gate/actions/workflows/ci.yml/badge.svg)](https://github.com/sivananda1995/rag-regression-gate/actions/workflows/ci.yml)
 [![tests 186](https://img.shields.io/badge/tests-186-2a78d6)](#tests-coverage-and-receipts)
 [![coverage 92%](https://img.shields.io/badge/coverage-92%25-2a78d6)](#tests-coverage-and-receipts)
 [![readme numbers machine checked](https://img.shields.io/badge/readme%20numbers-machine%20checked-1baf7a)](#every-number-here-is-checked-by-ci)
@@ -142,8 +142,8 @@ That last row matters and is easy to get wrong in the other direction. Leakage i
 Prerequisites: Python 3.10 or newer, `git`, and about 200 MB of disk for the optional FAISS extra.
 
 ```bash
-git clone https://github.com/sivananda1995/Rag-regression-gate.git
-cd Rag-regression-gate
+git clone https://github.com/sivananda1995/rag-regression-gate.git
+cd rag-regression-gate
 python -m venv .venv && source .venv/bin/activate    # Windows: .venv\Scripts\activate
 pip install -e ".[dev,faiss,train]"
 
@@ -165,7 +165,7 @@ git add baselines/baseline.json && git commit -m "chore(baseline): record retrie
 In another repository, as a step:
 
 ```yaml
-- uses: sivananda1995/Rag-regression-gate@main
+- uses: sivananda1995/rag-regression-gate@main
   with:
     config: ragate.yaml
     baseline: baselines/baseline.json

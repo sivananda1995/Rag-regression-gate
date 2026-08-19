@@ -56,7 +56,14 @@ so the gain is larger than this golden set's run-to-run noise.
 
 ## Architecture
 
-```mermaid
+<img src="docs/diagrams/architecture.svg" alt="Architecture diagram: the pipeline from committed inputs through to the report" width="100%">
+
+<details>
+<summary>the diagram source, and why this is an image</summary>
+
+GitHub renders `mermaid` fences itself, and when it works the source is the picture. It does not always work: this diagram parses and renders with mermaid 10 and 11 locally, and GitHub showed `Unable to render rich display: Cannot read properties of undefined (reading 'render')`, which is a failure inside their renderer rather than a syntax error here. So the picture is generated once by `tools/render_diagrams.py`, committed, and embedded, which renders identically on GitHub, in an editor preview, in a PDF and offline. The source below is in a plain fence so nothing tries to render it, and regenerating the image after editing it is one command.
+
+```mermaid-source name=architecture
 flowchart LR
   subgraph inputs[Committed inputs]
     A[corpus.jsonl<br/>420 articles]
@@ -94,6 +101,8 @@ flowchart LR
   K -- no --> M
   L & M & N --> O[markdown summary + self-contained HTML report<br/>+ per-query blame table]
 ```
+
+</details>
 
 Failures are handled at four boundaries, each refusing rather than guessing: corpus loading rejects a golden label pointing at a missing document, config loading rejects an unknown key or an impossible value, the reranker rejects a model trained on a different feature set, and the gate refuses to compare two reports whose corpus content or `k` differ.
 
